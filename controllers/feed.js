@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const tweet = require('../models/tweet');
 const Post = require("../models/tweet");
 const User = require("../models/user");
 
@@ -90,4 +91,48 @@ exports.createTweet = (req,res,next)=>{
       }
       next(err);
     });
+}
+
+
+exports.searchUser = (req,res,next)=>{
+  const userId = req.params.userId;
+  if(req.userId == userId){
+    const error = new Error('the same user looking for himself');
+        error.statusCode = 401;
+        throw error;
+  }
+  let utilisateur;
+  User.findById(userId)
+  .then(user =>{
+    if(!user){
+      const error = new Error('Could not find user.');
+        error.statusCode = 404;
+        throw error;
+    }
+    utilisateur = {
+      username : user.username,
+      email : user.email,
+      following : user.following,
+      followers : user.followers
+    }
+    return Post.find({userId : userId});
+  })
+  .then(posts =>{
+    if(!posts){
+      const error = new Error('Could not find posts.');
+        error.statusCode = 404;
+        throw error;
+    }
+    utilisateur.userPosts = posts;
+    res.status(200).json({
+      message : "found what u are looking for",
+      user : utilisateur
+    })
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
 }
