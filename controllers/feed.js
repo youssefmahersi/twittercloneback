@@ -60,12 +60,13 @@ exports.createTweet = (req,res,next)=>{
     throw error;
   }
   let imageurl;
+  console.log(req)
   if (!req.file) {
      imageurl = "";
   }else{
      imageurl = req.file.path;
   }
-  consol.log(req.file)
+ 
   const comment = req.body.comment;
   const post = new Post({
     comment: comment,
