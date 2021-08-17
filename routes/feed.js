@@ -9,5 +9,6 @@ router.post("/create-tweet",[
     body("comment").trim().isLength({min:4}).withMessage("minuimum 4 characters")
 ],isAuth,feedController.createTweet);
 
+router.post("/follow-user",isAuth,feedController.followUser);
 router.get("/:userId",isAuth,feedController.searchUser);
 module.exports = router;

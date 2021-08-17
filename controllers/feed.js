@@ -7,12 +7,8 @@ const User = require("../models/user");
 exports.followerspost = (req,res,next)=>{
     const userId = req.userId;
     let posts =[];
-    let followers =[
-      {
-        userId : "6116d9f6685b3a2144195fc0",
-        username : "youssef"
-      }
-    ];
+
+    let followers = [];
     User.findById(userId)
     .then(user =>{
         if(!user){
@@ -20,7 +16,7 @@ exports.followerspost = (req,res,next)=>{
             error.statusCode = 401;
             throw error;
         }
-        followers = user.following;
+         followers = user.following;
         return Post.find()
     })
     .then(tweets => {
@@ -31,7 +27,7 @@ exports.followerspost = (req,res,next)=>{
             throw error;
         }
         for(let tweet of tweets){
-            const postfollower = followers.find(follower => follower.userId ==tweet.userId );
+            const postfollower = followers.find(follower => follower.userId.toString() === tweet.userId.toString());
             if(postfollower){
                 posts.push(tweet);
             }
@@ -61,7 +57,6 @@ exports.createTweet = (req,res,next)=>{
     throw error;
   }
   let imageurl;
-  console.log(req)
   if (!req.file) {
      imageurl = "";
   }else{
@@ -128,6 +123,65 @@ exports.searchUser = (req,res,next)=>{
       message : "found what u are looking for",
       user : utilisateur
     })
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+
+exports.followUser = (req,res,next)=>{
+  const userId = req.userId;
+  const followingId = req.body.userId;
+  let followerUser;
+  let user2;
+  var checkUserfollowed ;
+  User.findById(userId)
+  .then(user =>{
+    if(!user){
+      const error = new Error('Could not find user.');
+        error.statusCode = 404;
+        throw error;
+    }
+    followerUser=user;
+    return User.findById(followingId)
+  })
+  .then(user =>{
+    if(!user){
+      const error = new Error('Could not find following user.');
+        error.statusCode = 404;
+        throw error;
+    }
+    checkUserfollowed = user.followers.find(follower => follower.userId.toString() === followerUser._id.toString());
+    if(!checkUserfollowed ){
+      user2= user;
+      user.followers.push({
+        userId : followerUser._id,
+        username : followerUser.username
+      })
+      return user.save();
+    }
+    const error = new Error('alerady followed user.');
+    error.statusCode = 404;
+    throw error;
+  })
+
+  .then(result =>{
+    User.findById(req.userId)
+    .then(user =>{
+      user.following.push({
+        userId : user2._id,
+        username : user2.username
+      })
+      return user.save();
+    })  
+    .then(result =>{
+      res.status(200).json({message : "following added succesfully"});
+        })  
+    
   })
   .catch(err =>{
     if (!err.statusCode) {

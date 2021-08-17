@@ -41,7 +41,8 @@ const userSchema = new Schema(
         
         userId:{
             type: Schema.Types.ObjectId,
-            required:true
+            required:true,
+            
           },
           username:{
               type : String,
