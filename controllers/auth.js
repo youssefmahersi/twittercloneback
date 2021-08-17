@@ -15,13 +15,6 @@ exports.signup = (req, res, next) => {
     const email = req.body.email;
     const username = req.body.username;
     const password = req.body.password;
-    const user = new User({
-        username :username,
-        email: email,
-        password: password,
-        following:[],
-        followers:[]
-      });
     bcrypt
       .hash(password, 12)
       .then(hashedPw => {
@@ -31,7 +24,8 @@ exports.signup = (req, res, next) => {
           password: hashedPw,
           tweets :[],
           following:[],
-          followers:[]
+          followers:[],
+          bookmarks:[]
         });
         return user.save();
       })

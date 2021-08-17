@@ -1,5 +1,4 @@
 const { validationResult } = require('express-validator');
-const tweet = require('../models/tweet');
 const Post = require("../models/tweet");
 const User = require("../models/user");
 
@@ -182,6 +181,62 @@ exports.followUser = (req,res,next)=>{
       res.status(200).json({message : "following added succesfully"});
         })  
     
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+exports.unfollowUser = (req,res,next)=>{
+  const followingId = req.body.followingId;
+  User.findById(req.userId)
+  .then(user =>{
+    if(!user){
+      const error = new Error('alerady followed user.');
+      error.statusCode = 404;
+      throw error;
+    }
+    const newFollowings = user.following.filter(follow => follow.userId.toString() !== followingId);
+    user.following = newFollowings;
+    return user.save();
+  })
+  .then(result =>{
+    console.log(followingId);
+    return User.findById(followingId)
+    
+  })
+  .then(user => {
+    const newFollowers = user.followers.filter(follow => follow.userId.toString() !== req.userId.toString());
+    user.followers = newFollowers;
+    return user.save();
+  })
+  .then(result =>{
+    res.status(200).json({message : "unfollowing user succesfully"});
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+exports.getbookmarks = (req,res,next)=>{
+  const userId = req.userId;
+  User.findById(userId)
+  .then(user =>{
+    if(!user){
+      const error = new Error('user not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    res.status(200).json({
+      message : "succesfull feth !",
+      bookmarks : user.bookmarks
+    })
   })
   .catch(err =>{
     if (!err.statusCode) {

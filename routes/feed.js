@@ -10,5 +10,7 @@ router.post("/create-tweet",[
 ],isAuth,feedController.createTweet);
 
 router.post("/follow-user",isAuth,feedController.followUser);
+router.post("/unfollow-user",isAuth,feedController.unfollowUser);
+router.get("/bookmarks",isAuth,feedController.getbookmarks);
 router.get("/:userId",isAuth,feedController.searchUser);
 module.exports = router;

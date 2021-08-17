@@ -49,6 +49,12 @@ const userSchema = new Schema(
               required :true
           }
         }
+    ],
+    bookmarks : [
+        {
+            type : Object,
+            required :true
+        }
     ]
    
   });
