@@ -25,8 +25,8 @@ const tweetSchema = new Schema({
             required : true
         },
         time :{ 
-            type: Date,
-             default: Date.now 
+            type: String,
+            required:true
         },
         imageUrl:{
             type : String
@@ -35,6 +35,10 @@ const tweetSchema = new Schema({
             type : Schema.Types.ObjectId,
             required : true,
             ref : "User"
+        },
+        username:{
+            type:String,
+            required :true
         },
         likes : [{
             userId :{
