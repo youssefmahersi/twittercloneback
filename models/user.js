@@ -9,7 +9,7 @@ const userSchema = new Schema(
     },
     bio : {
         type : String,
-        defult :"hi i'm new here"
+        defult :"Hi i'm new here,please fill me with a good presentation about you"
     },
     email : {
         type : String,

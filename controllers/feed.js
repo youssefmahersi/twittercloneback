@@ -61,7 +61,8 @@ exports.createTweet = (req,res,next)=>{
   }else{
      imageurl = req.file.path;
   }
- 
+
+  const public = req.body.public;
   const comment = req.body.comment;
   const post = new Post({
     comment: comment,
@@ -69,7 +70,8 @@ exports.createTweet = (req,res,next)=>{
     retweet:[],
     comments:[],
     likes:[],
-    userId: req.userId
+    userId: req.userId,
+    public: public
   });
   post
     .save()
@@ -109,7 +111,12 @@ exports.searchUser = (req,res,next)=>{
       following : user.following,
       followers : user.followers
     }
-    return Post.find({userId : userId});
+    const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
+    if(checkFollowingUser){
+      return Post.find({userId : userId});
+    }else{
+      return Post.find({userId : userId,public : true});
+    }
   })
   .then(posts =>{
     if(!posts){
@@ -237,6 +244,59 @@ exports.getbookmarks = (req,res,next)=>{
       message : "succesfull feth !",
       bookmarks : user.bookmarks
     })
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+
+exports.likePost = (req,res,next)=>{
+  const userId = req.userId;
+  const postId = req.body.postId;
+  var userinfo;
+  var state;
+  User.findById(userId)
+  .then(user =>{
+    if(!user){
+      const error = new Error('user not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    userinfo = user;
+    return Post.findById(postId)
+  })
+  .then(post =>{
+    if(!post){
+      const error = new Error('post not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    const checkuserLike = post.likes.find(user => user.userId.toString()=== userId.toString());
+    console.log(checkuserLike);
+    if(checkuserLike){
+      const newlikes = post.likes.filter(user => user.userId.toString()!== userId.toString());
+      state = false;
+      post.likes = newlikes;
+      return post.save();
+    }else{
+      post.likes.push({
+        userId : userId,
+        username : userinfo.username
+      })
+      state= true;
+      return post.save();
+    }
+  })
+  .then(result =>{
+    if(state){
+      res.status(200).json({message :"like added successfully"});
+    }else{
+      res.status(200).json({message :"like deleted successfully"});
+    }
   })
   .catch(err =>{
     if (!err.statusCode) {

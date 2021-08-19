@@ -67,6 +67,12 @@ const tweetSchema = new Schema({
         type : Schema.Types.ObjectId,
         required : true,
         ref : "User"
+    },
+
+    public : {
+        type : Boolean,
+        required  : true,
+        
     }
     
     
