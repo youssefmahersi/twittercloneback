@@ -139,97 +139,174 @@ exports.searchUser = (req,res,next)=>{
 }
 
 
+// exports.followUser = (req,res,next)=>{
+//   const userId = req.userId;
+//   const followingId = req.body.userId;
+//   let followerUser;
+//   let user2;
+//   var checkUserfollowed ;
+//   User.findById(userId)
+//   .then(user =>{
+//     if(!user){
+//       const error = new Error('Could not find user.');
+//         error.statusCode = 404;
+//         throw error;
+//     }
+//     followerUser=user;
+//     return User.findById(followingId)
+//   })
+//   .then(user =>{
+//     if(!user){
+//       const error = new Error('Could not find following user.');
+//         error.statusCode = 404;
+//         throw error;
+//     }
+//     checkUserfollowed = user.followers.find(follower => follower.userId.toString() === followerUser._id.toString());
+//     if(!checkUserfollowed ){
+//       user2= user;
+//       user.followers.push({
+//         userId : followerUser._id,
+//         username : followerUser.username
+//       })
+//       return user.save();
+//     }
+//     const error = new Error('alerady followed user.');
+//     error.statusCode = 404;
+//     throw error;
+//   })
+
+//   .then(result =>{
+//     User.findById(req.userId)
+//     .then(user =>{
+//       user.following.push({
+//         userId : user2._id,
+//         username : user2.username
+//       })
+//       return user.save();
+//     })  
+//     .then(result =>{
+//       res.status(200).json({message : "following added succesfully"});
+//         })  
+    
+//   })
+//   .catch(err =>{
+//     if (!err.statusCode) {
+//       err.statusCode = 500;
+//     }
+//     next(err);
+//   })
+// }
+
+// exports.unfollowUser = (req,res,next)=>{
+//   const followingId = req.body.followingId;
+//   User.findById(req.userId)
+//   .then(user =>{
+//     if(!user){
+//       const error = new Error('alerady followed user.');
+//       error.statusCode = 404;
+//       throw error;
+//     }
+//     const newFollowings = user.following.filter(follow => follow.userId.toString() !== followingId);
+//     user.following = newFollowings;
+//     return user.save();
+//   })
+//   .then(result =>{
+//     console.log(followingId);
+//     return User.findById(followingId)
+    
+//   })
+//   .then(user => {
+//     const newFollowers = user.followers.filter(follow => follow.userId.toString() !== req.userId.toString());
+//     user.followers = newFollowers;
+//     return user.save();
+//   })
+//   .then(result =>{
+//     res.status(200).json({message : "unfollowing user succesfully"});
+//   })
+//   .catch(err =>{
+//     if (!err.statusCode) {
+//       err.statusCode = 500;
+//     }
+//     next(err);
+//   })
+// }
+
 exports.followUser = (req,res,next)=>{
   const userId = req.userId;
-  const followingId = req.body.userId;
-  let followerUser;
-  let user2;
-  var checkUserfollowed ;
+  const followingId = req.body.followingId;
+  var userInfo;
+  var followingInfo;
+  var state;
   User.findById(userId)
   .then(user =>{
     if(!user){
-      const error = new Error('Could not find user.');
-        error.statusCode = 404;
-        throw error;
-    }
-    followerUser=user;
-    return User.findById(followingId)
-  })
-  .then(user =>{
-    if(!user){
-      const error = new Error('Could not find following user.');
-        error.statusCode = 404;
-        throw error;
-    }
-    checkUserfollowed = user.followers.find(follower => follower.userId.toString() === followerUser._id.toString());
-    if(!checkUserfollowed ){
-      user2= user;
-      user.followers.push({
-        userId : followerUser._id,
-        username : followerUser.username
-      })
-      return user.save();
-    }
-    const error = new Error('alerady followed user.');
-    error.statusCode = 404;
-    throw error;
-  })
-
-  .then(result =>{
-    User.findById(req.userId)
-    .then(user =>{
-      user.following.push({
-        userId : user2._id,
-        username : user2.username
-      })
-      return user.save();
-    })  
-    .then(result =>{
-      res.status(200).json({message : "following added succesfully"});
-        })  
-    
-  })
-  .catch(err =>{
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  })
-}
-
-exports.unfollowUser = (req,res,next)=>{
-  const followingId = req.body.followingId;
-  User.findById(req.userId)
-  .then(user =>{
-    if(!user){
-      const error = new Error('alerady followed user.');
+      const error = new Error('user not found1!.');
       error.statusCode = 404;
       throw error;
     }
-    const newFollowings = user.following.filter(follow => follow.userId.toString() !== followingId);
-    user.following = newFollowings;
-    return user.save();
+    userInfo = user;
+    return User.findById(followingId);
+  })
+  .then(following =>{
+    if(!following){
+      const error = new Error('following not found!.');
+      error.statusCode = 404;
+      throw error;
+    }
+    followingInfo = following;
+    const checkuserfollow = following.followers.find(follower => follower.userId.toString()=== userId);
+    if(checkuserfollow){
+      //remove follower
+      state = false;
+      var newfollowers = following.followers.filter(follower => follower.userId.toString()!== userId);
+      following.followers = newfollowers;
+      return following.save();
+    }else{
+      //add follower
+      state = true;
+      following.followers.push({
+        userId : userId,
+        username : userInfo.username
+      });
+      return following.save();
+    }
+  })
+  .then(result=>{
+    return User.findById(userId);
+  })
+  .then(user=>{
+    if(!user){
+      const error = new Error('user not found2!.');
+      error.statusCode = 404;
+      throw error;
+    }
+    if(state){
+      user.following.push({
+        userId : followingInfo._id.toString(),
+        username : followingInfo.username
+      })
+      return user.save();
+    }else{
+      var newfollowing = user.following.filter(follow => follow.userId.toString() !== followingInfo._id.toString());
+      user.following = newfollowing;
+      return user.save();
+    }
   })
   .then(result =>{
-    console.log(followingId);
-    return User.findById(followingId)
-    
-  })
-  .then(user => {
-    const newFollowers = user.followers.filter(follow => follow.userId.toString() !== req.userId.toString());
-    user.followers = newFollowers;
-    return user.save();
-  })
-  .then(result =>{
-    res.status(200).json({message : "unfollowing user succesfully"});
+    res.status(200).json({message : "operation done successfully!"});
   })
   .catch(err =>{
     if (!err.statusCode) {
-      err.statusCode = 500;
-    }
+        err.statusCode = 500;
+      }
     next(err);
   })
+
 }
+
+
+
+
 
 exports.getbookmarks = (req,res,next)=>{
   const userId = req.userId;
@@ -359,4 +436,69 @@ exports.commentPost = (req,res,next)=>{
     next(err);
   })
 
+}
+
+
+exports.likeComment = (req,res,next)=>{
+  const userId = req.userId;
+  const postId = req.body.postId;
+  const commentId = req.body.commentId;
+  var userInfo;
+  User.findById(userId)
+  .then(user=>{
+    if(!user){
+      const error = new Error('user not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    userInfo = user;
+    return Post.findById(postId);
+  })
+  .then(post =>{
+    if(!post){
+      const error = new Error('post not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    var lookedComment  = post.comments.find(comment => comment._id.toString() === commentId);
+    var lookedcommentIndex = post.comments.findIndex(comment => comment._id.toString() === commentId);
+    if(lookedcommentIndex == -1){
+      const error = new Error('comment not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    var like = lookedComment.likes.find(like => like.userId.toString() === userId);
+    if(like){
+      var newlikes = post.comments[lookedcommentIndex].likes.filter(like => like.userId.toString() !== userId);
+      post.comments[lookedcommentIndex].likes = newlikes;
+      return post.save();
+    }else{
+      post.comments[lookedcommentIndex].likes.push({
+        userId : userId,
+        username : userInfo.username
+      });
+      return post.save();
+    }
+  })
+  .then(result =>{
+    res.status(200).json({message : "operation added successfully!"});
+  })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+
+exports.saveTweet = (req,res,next)=>{
+
+  const userId = req.userId;
+  const postId = req.body.postId;
+  var post;
+  Post.findById(postId)
+  .then(post =>{
+    
+  })
 }
