@@ -1,5 +1,5 @@
 const path = require('path');
-
+const port = process.env.PORT || 8080;
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -69,6 +69,6 @@ mongoose
   )
   .then(result => {
     console.log("database connected!")
-    app.listen(8080);
+    app.listen(port);
   })
   .catch(err => console.log(err));
