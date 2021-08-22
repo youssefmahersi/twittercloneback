@@ -266,7 +266,8 @@ exports.followUser = (req,res,next)=>{
       state = true;
       following.followers.push({
         userId : userId,
-        username : userInfo.username
+        username : userInfo.username,
+        timeFollowed : new Date().toISOString().split('T')[0]
       });
       return following.save();
     }
@@ -283,7 +284,8 @@ exports.followUser = (req,res,next)=>{
     if(state){
       user.following.push({
         userId : followingInfo._id.toString(),
-        username : followingInfo.username
+        username : followingInfo.username,
+        timeFollowed : new Date().toISOString().split('T')[0]
       })
       return user.save();
     }else{
@@ -496,9 +498,43 @@ exports.saveTweet = (req,res,next)=>{
 
   const userId = req.userId;
   const postId = req.body.postId;
-  var post;
+  var data;
   Post.findById(postId)
   .then(post =>{
+    if(!post){
+      const error = new Error('post not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    data = post;
+    return post.save();
     
+  })
+  .then(result =>{
+    return User.findById(userId);
+  })
+  .then(user =>{
+    if(!user){
+      const error = new Error('user not found!');
+      error.statusCode = 404;
+      throw error;
+    }
+    const checkpostsaved = user.bookmarks.find(tweet => tweet._id.toString()=== postId);
+    if(checkpostsaved){
+      const error = new Error('tweet saved before!');
+      error.statusCode = 404;
+      throw error;
+    }
+    user.bookmarks.push(data);
+    return user.save();
+})
+.then(result =>{
+  res.status(200).json({message:"tweet saved successfuly!"});
+})
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
   })
 }

@@ -17,6 +17,10 @@ const tweetSchema = new Schema({
         username:{
             type : String,
             required :true
+        },
+        timeRetweeted:{
+            type :Date,
+            required:true
         }
     }],
     comments :[{

@@ -33,6 +33,10 @@ const userSchema = new Schema(
           username:{
               type : String,
               required :true
+          },
+          timeFollowed : {
+              type:Date,
+              required:true
           }
     }],
     followers : [
@@ -47,15 +51,17 @@ const userSchema = new Schema(
           username:{
               type : String,
               required :true
+          },
+          timeFollowed : {
+              type:Date,
+              required:true
           }
         }
     ],
-    bookmarks : [
-        {
-            type : Object,
-            required :true
-        }
-    ]
+    bookmarks : {
+        type : Array,
+        required : true
+    }
    
   });
 
