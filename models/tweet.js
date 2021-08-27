@@ -76,7 +76,10 @@ const tweetSchema = new Schema({
         required : true,
         ref : "User"
     },
-
+    username :{
+        type:String,
+        required:true
+    },
     public : {
         type : Boolean,
         required  : true,

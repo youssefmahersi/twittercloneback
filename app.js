@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
-
+const cors = require("cors");
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
 
@@ -40,6 +40,7 @@ app.use(
 //serve images statisticly
 app.use('/images', express.static(path.join(__dirname, 'images')));
 //cros
+app.use(cors());
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader(

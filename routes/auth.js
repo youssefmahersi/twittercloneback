@@ -13,7 +13,14 @@ router.put("/signup",[
     .custom((val) => /[^A-za-z0-9\s]/g.test(val))
     .withMessage('Username not use uniqe characters')
     .isLength({min:4})
-    .withMessage("username must contain at least  4 characters "),
+    .withMessage("username must contain at least  4 characters ")
+    .custom((value, { req }) => {
+      return User.findOne({ username: value }).then(userDoc => {
+        if (userDoc) {
+          return Promise.reject('Username already exists!');
+        }
+      });
+    }),
     body("email").isEmail()
     .withMessage('Please enter a valid email.')
     .custom((value, { req }) => {

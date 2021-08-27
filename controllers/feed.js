@@ -61,24 +61,24 @@ exports.createTweet = (req,res,next)=>{
   }else{
      imageurl = req.file.path;
   }
-
-  const public = req.body.public;
-  const comment = req.body.comment;
-  const post = new Post({
+  User.findById(req.userId)
+  .then(user =>{
+    const public = req.body.public;
+    const comment = req.body.comment;
+    const post = new Post({
     comment: comment,
     imageUrl:imageurl,
     retweet:[],
     comments:[],
     likes:[],
     userId: req.userId,
+    username : user.username,
     public: public
   });
-  post
-    .save()
-    .then(result => {
+     return post.save()
+  }).then(result => {
       res.status(201).json({
-        message: 'Post created successfully!',
-        post: post
+        message: 'Post created successfully!'
       });
     })
     .catch(err => {
