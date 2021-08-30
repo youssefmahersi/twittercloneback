@@ -61,6 +61,10 @@ const userSchema = new Schema(
     bookmarks : {
         type : Array,
         required : true
+    },
+    retweet : {
+        type : Array,
+        required : true
     }
    
   });

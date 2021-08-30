@@ -25,7 +25,8 @@ exports.signup = (req, res, next) => {
           tweets :[],
           following:[],
           followers:[],
-          bookmarks:[]
+          bookmarks:[],
+          retweet :[]
         });
         return user.save();
       })

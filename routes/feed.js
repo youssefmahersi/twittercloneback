@@ -4,7 +4,7 @@ const feedController = require("../controllers/feed");
 const isAuth = require("../utils/is-auth");
 const { body } = require('express-validator');
 
-router.get("/followers-posts",isAuth,feedController.followerspost);
+router.get("/followers-posts",isAuth,feedController.createTweet2);
 router.post("/create-tweet",[
     body("comment").trim().isLength({min:4}).withMessage("minuimum 4 characters")
 ],isAuth,feedController.createTweet);
@@ -16,6 +16,7 @@ router.post("/save-tweet",isAuth,feedController.saveTweet);
 router.post("/comment-post",isAuth,[
     body("content").isLength({min:4}).withMessage("minuimum 4 characters")
 ],feedController.commentPost);
+router.post("/retweet-post",isAuth,feedController.retweetPost);
 router.post("/like-comment",isAuth,feedController.likeComment);
 router.get("/bookmarks",isAuth,feedController.getbookmarks);
 router.get("/:userId",isAuth,feedController.searchUser);
