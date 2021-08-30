@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const Post = require("../models/tweet");
 const User = require("../models/user");
-
+const Tweret = require("../models/tweret");
 
 exports.followerspost = (req,res,next)=>{
     const userId = req.userId;
@@ -55,6 +55,8 @@ exports.createTweet = (req,res,next)=>{
     error.statusCode = 422;
     throw error;
   }
+  var tweet;
+  var userInfo;
   let imageurl;
   if (!req.file) {
      imageurl = "";
@@ -63,20 +65,34 @@ exports.createTweet = (req,res,next)=>{
   }
   User.findById(req.userId)
   .then(user =>{
+    userInfo=user;
     const public = req.body.public;
     const comment = req.body.comment;
     const post = new Post({
     comment: comment,
     imageUrl:imageurl,
-    retweet:[],
     comments:[],
     likes:[],
     userId: req.userId,
     username : user.username,
-    public: public
+    privacy: public
   });
+    tweet = post
      return post.save()
   }).then(result => {
+      const tweret = new Tweret({
+        type : "tweet",
+        creatorId : userInfo._id.toString(),
+        creatorUsername: userInfo.username,
+        postId: tweet._id,
+        time:new Date().toISOString(),
+        privacy: req.body.public
+
+      })
+      return tweret.save();
+      
+    })
+    .then(result =>{
       res.status(201).json({
         message: 'Post created successfully!'
       });
@@ -87,6 +103,62 @@ exports.createTweet = (req,res,next)=>{
       }
       next(err);
     });
+}
+
+exports.createTweet2 =async (req,res,next)=>{
+    var following =[];
+    var posts = [];
+    var realPosts = [];
+    try{
+    const user = await User.findById(req.userId)
+    following = user.following;
+    const tweets = await Tweret.find();
+    if(!tweets){
+      const error = new Error('Post alerady exists');
+      error.statusCode = 409;
+      throw error;
+    }else{
+      for (let tweet of tweets){
+        if(tweet.type == "tweet"){
+          const check = following.find(follow => follow.userId.toString() === tweet.creatorId.toString());
+          if(check){
+            posts.push(tweet);
+          }
+        }else{
+          const check = following.find(follow => follow.userId.toString()  === tweet.retweeterId.toString());
+          if(check && tweet.privacy == false){
+            posts.push(tweet);
+          }
+        }
+      }
+      for(let post of posts){
+        const tweet = await Post.findById(post.postId)
+        if(post.type == "tweet"){
+          const b = {
+            type: "tweet",
+            tweet: tweet
+          }
+          realPosts.push(b);  
+        }else{
+          const a = {
+            type: "retweet",
+            tweet: tweet,
+            status:post.retweeterUsername+" retweeted"
+          }
+          realPosts.push(a);
+        }
+      }
+            
+      res.status(200).json({posts : realPosts});
+            
+    }
+    }
+    catch(err){
+      if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);}
+   
 }
 
 
@@ -234,6 +306,11 @@ exports.searchUser = (req,res,next)=>{
 exports.followUser = (req,res,next)=>{
   const userId = req.userId;
   const followingId = req.body.followingId;
+  if(userId == followingId){
+      const error = new Error('not allowed!.');
+      error.statusCode = 404;
+      throw error;
+  }
   var userInfo;
   var followingInfo;
   var state;
@@ -531,6 +608,60 @@ exports.saveTweet = (req,res,next)=>{
 .then(result =>{
   res.status(200).json({message:"tweet saved successfuly!"});
 })
+  .catch(err =>{
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  })
+}
+
+
+exports.retweetPost = (req,res,next)=>{
+  const postId = req.body.postId;
+  var userInfo;
+  var tweet;
+  Post.findById(postId)
+  .then(post =>{
+    tweet = post;
+    return User.findById(req.userId)
+  })
+  .then(user=>{
+    if(!user){
+      const error = new Error('user not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    userInfo = user;
+    const checkPost = user.retweet.find(post => post.postId === postId);
+    if(checkPost){
+      const error = new Error('Post alerady exists');
+      error.statusCode = 409;
+      throw error;
+    }
+    var newRetweet = {
+      postId : postId,
+      timeRetweeted : new Date().toISOString()
+    }
+    user.retweet.push(newRetweet);
+     return user.save();
+  })
+  .then(result =>{
+    const tweret = new Tweret({
+      type : "retweet",
+      creatorId : tweet.userId,
+      creatorUsername: tweet.username,
+      postId: tweet._id,
+      time:new Date().toISOString(),
+      privacy: tweet.privacy,
+      retweeterId : userInfo._id,
+      retweeterUsername: userInfo.username
+    })
+    return tweret.save();
+  })
+  .then(result =>{
+    res.status(200).json({message : "retweet added successfully!"});
+  })
   .catch(err =>{
     if (!err.statusCode) {
       err.statusCode = 500;

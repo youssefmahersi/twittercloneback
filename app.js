@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
-
+const test = require("./utils/hometweets");
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -65,7 +65,7 @@ mongoose
     {useNewUrlParser: true, useUnifiedTopology: true}
   )
   .then(result => {
-    console.log("database connected!")
+    console.log("database connected!");
     app.listen(port);
   })
   .catch(err => console.log(err));

@@ -8,21 +8,6 @@ const tweetSchema = new Schema({
     imageUrl :{
         type:String
     },
-    retweet : [{
-        userId:{
-            type: Schema.Types.ObjectId,
-            required :true,
-            ref : 'User'
-        },
-        username:{
-            type : String,
-            required :true
-        },
-        timeRetweeted:{
-            type :Date,
-            required:true
-        }
-    }],
     comments :[{
         content :{
             type : String,
@@ -80,7 +65,7 @@ const tweetSchema = new Schema({
         type:String,
         required:true
     },
-    public : {
+    privacy : {
         type : Boolean,
         required  : true,
         
