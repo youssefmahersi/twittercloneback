@@ -4,7 +4,7 @@ const feedController = require("../controllers/feed");
 const isAuth = require("../utils/is-auth");
 const { body } = require('express-validator');
 
-router.get("/followers-posts",isAuth,feedController.createTweet2);
+router.get("/followers-posts",isAuth,feedController.getAll);
 router.post("/create-tweet",[
     body("comment").trim().isLength({min:4}).withMessage("minuimum 4 characters")
 ],isAuth,feedController.createTweet);

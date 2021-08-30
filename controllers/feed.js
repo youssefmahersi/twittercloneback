@@ -105,7 +105,7 @@ exports.createTweet = (req,res,next)=>{
     });
 }
 
-exports.createTweet2 =async (req,res,next)=>{
+exports.getAll=async (req,res,next)=>{
     var following =[];
     var posts = [];
     var realPosts = [];
