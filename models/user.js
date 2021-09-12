@@ -35,7 +35,7 @@ const userSchema = new Schema(
               required :true
           },
           timeFollowed : {
-              type:Date,
+              type:String,
               required:true
           }
     }],
@@ -53,7 +53,7 @@ const userSchema = new Schema(
               required :true
           },
           timeFollowed : {
-              type:Date,
+              type:String,
               required:true
           }
         }

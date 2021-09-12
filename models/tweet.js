@@ -8,6 +8,9 @@ const tweetSchema = new Schema({
     imageUrl :{
         type:String
     },
+    timeCreated:{
+        type:String
+    },
     comments :[{
         content :{
             type : String,
@@ -55,7 +58,12 @@ const tweetSchema = new Schema({
             }
         }
     ],
-
+    saves :{
+        type :Array,
+    },
+    retweets:{
+        type :Array,
+    },
     userId :{
         type : Schema.Types.ObjectId,
         required : true,
@@ -69,10 +77,17 @@ const tweetSchema = new Schema({
         type : Boolean,
         required  : true,
         
+    },
+    total:{
+         type : mongoose.Decimal128,
+    },
+    rank : {
+         type: mongoose.Decimal128
     }
+ 
     
     
 
-},{ timestamps: true });
+});
 
 module.exports = mongoose.model('Tweet', tweetSchema);
