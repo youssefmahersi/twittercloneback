@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator');
 const Post = require("../models/tweet");
 const User = require("../models/user");
 const Tweret = require("../models/tweret");
-
+const timeDif = require("../utils/timeDif");
 
 function formatDate(){
   
@@ -12,7 +12,6 @@ function formatDate(){
   const hour = new Date().getHours();
   const minutes = new Date().getMinutes();
   const seconds = new Date().getSeconds();
-  console.log( `${year}/${month}/${date} ${hour}:${minutes}:${seconds}`)
   return `${year}/${month}/${date} ${hour}:${minutes}:${seconds}`;
 }
 
@@ -94,7 +93,8 @@ exports.createTweet = async(req,res,next)=>{
     retweets : [],
     saves : []
   });
-  console.log((user.followers.length * 100)/users.length);
+  console.log(user.followers.length)
+  console.log((user.followers.length * 100)/users.length)
   tweet = post
   const result1 = await post.save()
   const tweret = new Tweret({
@@ -680,11 +680,109 @@ exports.retweetPost = async(req,res,next)=>{
 
 exports.topTweets = async(req,res,next)=>{
   const userId = req.userId;
+  var posts = [];
   try{
-    const posts = await Post.find();
+    const tweets = await Post.find();
     const user = await User.findById(userId);
     ///overhere
+    for(let tweet of tweets){
+      if(tweet.privacy === true){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
 
+    }
+
+  }
+  res.status(200).json({posts:posts});
+  }catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+
+}
+
+
+
+exports.latestTweets = async (req,res,next)=>{
+  console.log("kjjs")
+  const timeNow = new Date();
+  const userId = req.userId;
+  var posts = [];
+  try{
+    const tweets = await Post.find();
+    const user = await User.findById(userId);
+    ///overhere
+    for(let tweet of tweets){
+      console.log(timeDif(new Date(tweet.timeCreated),timeNow))
+      if((tweet.privacy === true) && (timeDif(new Date(tweet.timeCreated),timeNow)<1)){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
+
+    }
+
+  }
+  res.status(200).json({posts:posts});
+  }catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+}
+
+
+
+exports.popularPeople = async(req,res,next)=>{
+  const userId = req.userId;
+
+  var users = await User.find();
+  users.sort(function(a, b) {
+    return b.followers.length - a.followers.length;
+  });
+  
+  res.status(200).json({users:users});
+
+};
+
+exports.tweetMedia = async(req,res,next)=>{
+  const userId = req.userId;
+  var posts = [];
+  try{
+    const tweets = await Post.find();
+    const user = await User.findById(userId);
+    ///overhere
+    for(let tweet of tweets){
+      if(tweet.privacy === true && tweet.imageUrl != ""){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
+
+    }
+
+  }
+  res.status(200).json({posts:posts});
   }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;

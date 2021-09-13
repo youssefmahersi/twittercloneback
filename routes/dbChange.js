@@ -23,12 +23,10 @@ router.get("/update",async (req,res,next)=>{
         var popularity = (user.followers.length *100)/users.length;
         const total = (likes*popularity)+(saves*popularity)+popularity+comments+retweets;
         var time = timeDif(new Date(post.timeCreated),new Date());
-        console.log(time)
         const r = total / timeFun(time);
         post.total = total;
         post.rank = r;
         const result = await post.save();
-        console.log("updated");
     }
     
  }catch(err){ 

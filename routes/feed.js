@@ -9,10 +9,10 @@ router.post("/create-tweet",[
     body("comment").trim().isLength({min:4}).withMessage("minuimum 4 characters")
 ],isAuth,feedController.createTweet);
 //routes in search page
-router.get("/top-tweets",);
-router.get("latest-tweets",);
-router.get("/popular-people",);
-router.get("/tweet-media",);
+router.get("/top-tweets",isAuth,feedController.topTweets);
+router.get("/latest-tweets",isAuth,feedController.latestTweets);
+router.get("/popular-people",isAuth,feedController.popularPeople);
+router.get("/tweet-media",isAuth,feedController.tweetMedia);
 router.post("/follow-user",isAuth,feedController.followUser);
 // router.post("/unfollow-user",isAuth,feedController.unfollowUser);
 router.post("/like-post",isAuth,feedController.likePost);
