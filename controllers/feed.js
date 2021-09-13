@@ -2,54 +2,62 @@ const { validationResult } = require('express-validator');
 const Post = require("../models/tweet");
 const User = require("../models/user");
 const Tweret = require("../models/tweret");
+const timeDif = require("../utils/timeDif");
 
-exports.followerspost = (req,res,next)=>{
-    const userId = req.userId;
-    let posts =[];
+function formatDate(){
+  
+  const year = new Date().getFullYear();
+  const month = new Date().getMonth()+1;
+  const date = new Date().getDate();
+  const hour = new Date().getHours();
+  const minutes = new Date().getMinutes();
+  const seconds = new Date().getSeconds();
+  return `${year}/${month}/${date} ${hour}:${minutes}:${seconds}`;
+}
 
-    let followers = [];
-    User.findById(userId)
-    .then(user =>{
-        if(!user){
-            const error = new Error('user not found!!');
-            error.statusCode = 401;
-            throw error;
-        }
-         followers = user.following;
-        return Post.find()
-    })
-    .then(tweets => {
-      
-        if(!tweets){
-            const error = new Error('posts not found!!');
-            error.statusCode = 401;
-            throw error;
-        }
-        for(let tweet of tweets){
-            const postfollower = followers.find(follower => follower.userId.toString() === tweet.userId.toString());
-            if(postfollower){
-                posts.push(tweet);
-            }
-        }
-        res.status(200).json({
-            message: 'Fetched posts successfully.',
-            posts: posts
-          });
+exports.followerspost = async(req,res,next)=>{
+  const userId = req.userId;
+  let posts =[];
+  let followers = [];
+  try{
+      const user = await User.findById(userId);
+      if(!user){
+        const error = new Error('user not found!!');
+        error.statusCode = 401;
+        throw error;
+      }
+      followers = user.following;
+      const tweets = await Post.find()
+      if(!tweets){
+        const error = new Error('posts not found!!');
+        error.statusCode = 401;
+        throw error;
+      }
+      for(let tweet of tweets){
+        const postfollower = followers.find(follower => follower.userId.toString() === tweet.userId.toString());
+        if(postfollower){
+        posts.push(tweet);
+      }
+    }
+    res.status(200).json({
+      message: 'Fetched posts successfully.',
+      posts: posts
+    });
 
-
-    })
-    .catch(err =>{
-        if (!err.statusCode) {
-            err.statusCode = 500;
-          }
-          next(err);
-    })
+  }
+  catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+    
 };
 
 
 
-exports.createTweet = (req,res,next)=>{
-    const errors = validationResult(req);
+exports.createTweet = async(req,res,next)=>{
+  const errors = validationResult(req);  
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
     error.statusCode = 422;
@@ -63,46 +71,52 @@ exports.createTweet = (req,res,next)=>{
   }else{
      imageurl = req.file.path;
   }
-  User.findById(req.userId)
-  .then(user =>{
-    userInfo=user;
-    const public = req.body.public;
-    const comment = req.body.comment;
-    const post = new Post({
+  try{
+
+  
+  const user = await User.findById(req.userId)
+  const users = await User.find();
+  userInfo=user;
+  const public = req.body.public;
+  const comment = req.body.comment;
+  const post = new Post({
     comment: comment,
     imageUrl:imageurl,
     comments:[],
     likes:[],
+    timeCreated : formatDate(),
     userId: req.userId,
     username : user.username,
-    privacy: public
+    privacy: public,
+    total : (user.followers.length * 100)/users.length,
+    rank : ((user.followers.length * 100)/users.length)/Math.log(1.02),
+    retweets : [],
+    saves : []
   });
-    tweet = post
-     return post.save()
-  }).then(result => {
-      const tweret = new Tweret({
-        type : "tweet",
-        creatorId : userInfo._id.toString(),
-        creatorUsername: userInfo.username,
-        postId: tweet._id,
-        time:new Date().toISOString(),
-        privacy: req.body.public
-
-      })
-      return tweret.save();
-      
-    })
-    .then(result =>{
-      res.status(201).json({
-        message: 'Post created successfully!'
-      });
-    })
-    .catch(err => {
-      if (!err.statusCode) {
-        err.statusCode = 500;
-      }
-      next(err);
-    });
+  console.log(user.followers.length)
+  console.log((user.followers.length * 100)/users.length)
+  tweet = post
+  const result1 = await post.save()
+  const tweret = new Tweret({
+    type : "tweet",
+    creatorId : userInfo._id.toString(),
+    creatorUsername: userInfo.username,
+    postId: tweet._id,
+    time:formatDate(),
+    privacy: req.body.public
+  })
+  
+  const result2 = await tweret.save();
+  res.status(201).json({
+    message: 'Post created successfully!'
+  });
+}
+  catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+}
 }
 
 exports.getAll=async (req,res,next)=>{
@@ -344,7 +358,7 @@ exports.followUser = (req,res,next)=>{
       following.followers.push({
         userId : userId,
         username : userInfo.username,
-        timeFollowed : new Date().toISOString().split('T')[0]
+        timeFollowed :formatDate()
       });
       return following.save();
     }
@@ -362,7 +376,7 @@ exports.followUser = (req,res,next)=>{
       user.following.push({
         userId : followingInfo._id.toString(),
         username : followingInfo.username,
-        timeFollowed : new Date().toISOString().split('T')[0]
+        timeFollowed : formatDate()
       })
       return user.save();
     }else{
@@ -472,7 +486,6 @@ exports.commentPost = (req,res,next)=>{
   const userId = req.userId;
   const postId = req.body.postId;
   const content = req.body.content;
-  const time = new Date().toLocaleString() ;
   var userInfo;
   let commentImage;
   if (!req.file) {
@@ -498,7 +511,7 @@ exports.commentPost = (req,res,next)=>{
     }
     post.comments.push({
       content : content,
-      time : time,
+      time :formatDate(),
       imageUrl : commentImage,
       userId : userId,
       username : userInfo.username
@@ -571,26 +584,28 @@ exports.likeComment = (req,res,next)=>{
 }
 
 
-exports.saveTweet = (req,res,next)=>{
+exports.saveTweet = async(req,res,next)=>{
 
   const userId = req.userId;
   const postId = req.body.postId;
   var data;
-  Post.findById(postId)
-  .then(post =>{
+  try{
+    const post = await Post.findById(postId);
     if(!post){
       const error = new Error('post not found!');
       error.statusCode = 404;
       throw error;
     }
     data = post;
-    return post.save();
-    
-  })
-  .then(result =>{
-    return User.findById(userId);
-  })
-  .then(user =>{
+    const checkuser = post.saves.find(user => user.toStirng() ===postId.toString());
+    if(checkuser){
+      const error = new Error('tweet saved before!');
+      error.statusCode = 404;
+      throw error;
+    }
+    post.saves.push(postId);
+    const result1 = await post.save();
+    const user = await User.findById(userId);
     if(!user){
       const error = new Error('user not found!');
       error.statusCode = 404;
@@ -603,37 +618,34 @@ exports.saveTweet = (req,res,next)=>{
       throw error;
     }
     user.bookmarks.push(data);
-    return user.save();
-})
-.then(result =>{
-  res.status(200).json({message:"tweet saved successfuly!"});
-})
-  .catch(err =>{
+    const result = await user.save();
+    res.status(200).json({message:"tweet saved successfuly!"});
+  }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+  }
 }
 
 
-exports.retweetPost = (req,res,next)=>{
+exports.retweetPost = async(req,res,next)=>{
   const postId = req.body.postId;
   var userInfo;
   var tweet;
-  Post.findById(postId)
-  .then(post =>{
+  try{
+    const post = await Post.findById(postId);
     tweet = post;
-    return User.findById(req.userId)
-  })
-  .then(user=>{
+    post.retweets.push(postId);
+    const res1 =await post.save();
+    const user = await User.findById(req.userId);
     if(!user){
       const error = new Error('user not found');
       error.statusCode = 404;
       throw error;
     }
     userInfo = user;
-    const checkPost = user.retweet.find(post => post.postId === postId);
+    const checkPost = await user.retweet.find(post => post.postId === postId);
     if(checkPost){
       const error = new Error('Post alerady exists');
       error.statusCode = 409;
@@ -641,31 +653,141 @@ exports.retweetPost = (req,res,next)=>{
     }
     var newRetweet = {
       postId : postId,
-      timeRetweeted : new Date().toISOString()
+      timeRetweeted : new Date()
     }
     user.retweet.push(newRetweet);
-     return user.save();
-  })
-  .then(result =>{
+    const result1 = await user.save();
     const tweret = new Tweret({
       type : "retweet",
       creatorId : tweet.userId,
       creatorUsername: tweet.username,
       postId: tweet._id,
-      time:new Date().toISOString(),
+      time:formatDate(),
       privacy: tweet.privacy,
       retweeterId : userInfo._id,
       retweeterUsername: userInfo.username
     })
-    return tweret.save();
-  })
-  .then(result =>{
+    const result = await  tweret.save();
     res.status(200).json({message : "retweet added successfully!"});
-  })
-  .catch(err =>{
+  }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+  }
+}
+
+
+exports.topTweets = async(req,res,next)=>{
+  const userId = req.userId;
+  var posts = [];
+  try{
+    const tweets = await Post.find();
+    const user = await User.findById(userId);
+    ///overhere
+    for(let tweet of tweets){
+      if(tweet.privacy === true){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
+
+    }
+
+  }
+  res.status(200).json({posts:posts});
+  }catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+
+}
+
+
+
+exports.latestTweets = async (req,res,next)=>{
+  console.log("kjjs")
+  const timeNow = new Date();
+  const userId = req.userId;
+  var posts = [];
+  try{
+    const tweets = await Post.find();
+    const user = await User.findById(userId);
+    ///overhere
+    for(let tweet of tweets){
+      console.log(timeDif(new Date(tweet.timeCreated),timeNow))
+      if((tweet.privacy === true) && (timeDif(new Date(tweet.timeCreated),timeNow)<1)){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
+
+    }
+
+  }
+  res.status(200).json({posts:posts});
+  }catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+}
+
+
+
+exports.popularPeople = async(req,res,next)=>{
+  const userId = req.userId;
+
+  var users = await User.find();
+  users.sort(function(a, b) {
+    return b.followers.length - a.followers.length;
+  });
+  
+  res.status(200).json({users:users});
+
+};
+
+exports.tweetMedia = async(req,res,next)=>{
+  const userId = req.userId;
+  var posts = [];
+  try{
+    const tweets = await Post.find();
+    const user = await User.findById(userId);
+    ///overhere
+    for(let tweet of tweets){
+      if(tweet.privacy === true && tweet.imageUrl != ""){
+      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
+      if(postfollower){
+        posts.push(tweet);
+      }
+      posts.sort(function(a, b) {
+        return b.total - a.total;
+      });
+      
+    
+
+    }
+
+  }
+  res.status(200).json({posts:posts});
+  }catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+
 }

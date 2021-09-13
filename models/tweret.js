@@ -21,7 +21,7 @@ const tweretSchema = new Schema({
         ref :"Tweet"
    },
    time :{
-        type:Date,
+        type:String,
         required:true
    },
    privacy:{
@@ -34,7 +34,6 @@ const tweretSchema = new Schema({
    retweeterUsername:{
         type : String
    }
-
 });
 
 module.exports = mongoose.model('Tweret', tweretSchema);

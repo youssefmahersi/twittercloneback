@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
-const test = require("./utils/hometweets");
+const dbupdate = require("./routes/dbChange");
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -47,8 +47,10 @@ app.use((req, res, next) => {
   next();
 });
 //routes
+
 app.use('/feed', feedRoutes);
 app.use('/auth', authRoutes);
+app.use(dbupdate);
 //error handler
 app.use((error, req, res, next) => {
   
