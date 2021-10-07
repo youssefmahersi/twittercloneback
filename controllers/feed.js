@@ -34,11 +34,12 @@ exports.followerspost = async(req,res,next)=>{
         throw error;
       }
       for(let tweet of tweets){
-        const postfollower = followers.find(follower => follower.userId.toString() === tweet.userId.toString());
+        const postfollower = await followers.find(follower => follower.userId.toString() === tweet.userId.toString());
         if(postfollower){
         posts.push(tweet);
       }
     }
+    
     res.status(200).json({
       message: 'Fetched posts successfully.',
       posts: posts
@@ -77,7 +78,7 @@ exports.createTweet = async(req,res,next)=>{
   const user = await User.findById(req.userId)
   const users = await User.find();
   userInfo=user;
-  const public = req.body.public;
+  const public = req.body.audience;
   const comment = req.body.comment;
   const post = new Post({
     comment: comment,
@@ -791,3 +792,8 @@ exports.tweetMedia = async(req,res,next)=>{
   }
 
 }
+
+
+
+
+
