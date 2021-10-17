@@ -179,11 +179,6 @@ exports.getAll=async (req,res,next)=>{
 
 exports.searchUser = (req,res,next)=>{
   const userId = req.params.userId;
-  if(req.userId == userId){
-    const error = new Error('the same user looking for himself');
-        error.statusCode = 401;
-        throw error;
-  }
   let utilisateur;
   User.findById(userId)
   .then(user =>{
@@ -192,12 +187,18 @@ exports.searchUser = (req,res,next)=>{
         error.statusCode = 404;
         throw error;
     }
-    utilisateur = {
-      username : user.username,
-      email : user.email,
-      following : user.following,
-      followers : user.followers
+    if(req.userId == userId){
+      utilisateur = user;
+
+    }else{
+      utilisateur = {
+        username : user.username,
+        email : user.email,
+        following : user.following,
+        followers : user.followers
+      }
     }
+    
     const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
     if(checkFollowingUser){
       return Post.find({userId : userId});
