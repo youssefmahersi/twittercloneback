@@ -58,6 +58,7 @@ exports.followerspost = async(req,res,next)=>{
 
 
 exports.createTweet = async(req,res,next)=>{
+  try{
   const errors = validationResult(req);  
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -72,7 +73,7 @@ exports.createTweet = async(req,res,next)=>{
   }else{
      imageurl = req.file.path;
   }
-  try{
+  
 
   
   const user = await User.findById(req.userId)
@@ -195,7 +196,10 @@ exports.searchUser = (req,res,next)=>{
         username : user.username,
         email : user.email,
         following : user.following,
-        followers : user.followers
+        followers : user.followers,
+        bio: user.bio,
+        profilPicture : user.photoProf ,
+        bannerPicture : user.photoCover
       }
     }
     
