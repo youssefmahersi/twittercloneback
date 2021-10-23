@@ -198,8 +198,8 @@ exports.searchUser = (req,res,next)=>{
         following : user.following,
         followers : user.followers,
         bio: user.bio,
-        profilPicture : user.photoProf ,
-        bannerPicture : user.photoCover
+        photoProf : user.photoProf ,
+        photoCover : user.photoCover
       }
     }
     
