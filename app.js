@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
+const editRoutes = require("./routes/edit");
 const dbupdate = require("./routes/dbChange");
 const app = express();
 
@@ -42,13 +43,14 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type',' Authorization');
+  res.setHeader('Access-Control-Allow-Headers', ['Content-Type',' Authorization']);
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
 //routes
 
 app.use('/feed', feedRoutes);
+app.use("/edit",editRoutes);
 app.use('/auth', authRoutes);
 app.use(dbupdate);
 //error handler
