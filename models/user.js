@@ -25,7 +25,7 @@ const userSchema = new Schema(
     },
     photoCover :{
         type:String,
-        default :"images/pc.png"
+        default :"images/cp.png"
     },
     following : [{
         userId:{
