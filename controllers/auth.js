@@ -69,7 +69,7 @@ exports.signup = (req, res, next) => {
           'somesupersecretsecret',
           { expiresIn: '24h' }
         );
-        res.status(200).json({ token: token, user: loadedUser });
+        res.status(200).json({ token: token, userId: loadedUser._id.toString(),username:loadedUser.username,auth:true,pp:loadedUser.photoProf });
       })
       .catch(err => {
         if (!err.statusCode) {
