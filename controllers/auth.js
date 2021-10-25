@@ -63,13 +63,13 @@ exports.signup = (req, res, next) => {
         }
         const token = jwt.sign(
           {
-            userId: loadedUser._id.toString(),
-            user : loadedUser
+            email: loadedUser.email,
+            userId: loadedUser._id.toString()
           },
           'somesupersecretsecret',
           { expiresIn: '24h' }
         );
-        res.status(200).json({ token: token, userId: loadedUser._id.toString(),username:loadedUser.username,auth:true });
+        res.status(200).json({ token: token, user: loadedUser });
       })
       .catch(err => {
         if (!err.statusCode) {
