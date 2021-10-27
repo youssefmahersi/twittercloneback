@@ -23,6 +23,6 @@ router.post("/comment-post",isAuth,[
 router.post("/retweet-post",isAuth,feedController.retweetPost);
 router.post("/like-comment",isAuth,feedController.likeComment);
 router.get("/bookmarks",isAuth,feedController.getbookmarks);
-
+router.get("/tweets/:userId",isAuth,feedController.getTweets);
 router.get("/:userId",isAuth,feedController.searchUser);
 module.exports = router;

@@ -15,45 +15,45 @@ function formatDate(){
   return `${year}/${month}/${date} ${hour}:${minutes}:${seconds}`;
 }
 
-exports.followerspost = async(req,res,next)=>{
-  const userId = req.userId;
-  let posts =[];
-  let followers = [];
-  try{
-      const user = await User.findById(userId);
-      if(!user){
-        const error = new Error('user not found!!');
-        error.statusCode = 401;
-        throw error;
-      }
-      followers = user.following;
-      const tweets = await Post.find()
-      if(!tweets){
-        const error = new Error('posts not found!!');
-        error.statusCode = 401;
-        throw error;
-      }
-      for(let tweet of tweets){
-        const postfollower = await followers.find(follower => follower.userId.toString() === tweet.userId.toString());
-        if(postfollower){
-        posts.push(tweet);
-      }
-    }
+// exports.followerspost = async(req,res,next)=>{
+//   const userId = req.userId;
+//   let posts =[];
+//   let followers = [];
+//   try{
+//       const user = await User.findById(userId);
+//       if(!user){
+//         const error = new Error('user not found!!');
+//         error.statusCode = 401;
+//         throw error;
+//       }
+//       followers = user.following;
+//       const tweets = await Post.find()
+//       if(!tweets){
+//         const error = new Error('posts not found!!');
+//         error.statusCode = 401;
+//         throw error;
+//       }
+//       for(let tweet of tweets){
+//         const postfollower = await followers.find(follower => follower.userId.toString() === tweet.userId.toString());
+//         if(postfollower){
+//         posts.push(tweet);
+//       }
+//     }
     
-    res.status(200).json({
-      message: 'Fetched posts successfully.',
-      posts: posts
-    });
+//     res.status(200).json({
+//       message: 'Fetched posts successfully.',
+//       posts: posts
+//     });
 
-  }
-  catch(err){
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
+//   }
+//   catch(err){
+//     if (!err.statusCode) {
+//       err.statusCode = 500;
+//     }
+//     next(err);
+//   }
     
-};
+// };
 
 
 
@@ -176,6 +176,26 @@ exports.getAll=async (req,res,next)=>{
     next(err);}
    
 }
+
+
+exports.getTweets = async(req,res,next)=>{
+  const userId = req.params.userId;
+  try{
+    const tweets = await Post.find({userId });
+    res.status(200).json({
+      tweets
+    });
+  } 
+  catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+}      
+  
+}
+
+
 
 
 exports.searchUser = (req,res,next)=>{
