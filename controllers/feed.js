@@ -643,7 +643,7 @@ exports.saveTweet = async(req,res,next)=>{
       error.statusCode = 404;
       throw error;
     }
-    user.bookmarks.push(data);
+    user.bookmarks.push(userId);
     const result = await user.save();
     res.status(200).json({message:"tweet saved successfuly!"});
   }catch(err){
