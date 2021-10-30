@@ -182,6 +182,7 @@ exports.getTweets = async(req,res,next)=>{
   const userId = req.params.userId;
   try{
     const tweets = await Post.find({userId });
+    console.log(tweets);
     res.status(200).json({
       tweets
     });
@@ -629,7 +630,7 @@ exports.saveTweet = async(req,res,next)=>{
       error.statusCode = 404;
       throw error;
     }
-    post.saves.push(postId);
+    post.saves.push(userId);
     const result1 = await post.save();
     const user = await User.findById(userId);
     if(!user){
@@ -662,7 +663,7 @@ exports.retweetPost = async(req,res,next)=>{
   try{
     const post = await Post.findById(postId);
     tweet = post;
-    post.retweets.push(postId);
+    post.retweets.push(req.userId);
     const res1 =await post.save();
     const user = await User.findById(req.userId);
     if(!user){
