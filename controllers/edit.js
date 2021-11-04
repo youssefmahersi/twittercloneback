@@ -3,7 +3,7 @@ const Post = require("../models/tweet");
 const User = require("../models/user");
 const Tweret = require("../models/tweret");
 const bcrypt = require("bcryptjs");
-
+const {deleteFile} = require("../file");
 exports.photoProfil = async(req,res,next)=>{
 
     try{
@@ -11,7 +11,9 @@ exports.photoProfil = async(req,res,next)=>{
         const user = await User.findById(req.userId);
         user.photoProf = req.file.path;
         const result = await user.save();
-
+        if(user.photoProf != "iamges/pp.png"){
+            deleteFile(user.photoProf.slice(7));
+        }
         res.status(200).json({
             message: "profil picture updated succesfully!"
         })
@@ -33,7 +35,9 @@ exports.photoCoverture = async(req,res,next)=>{
         const user = await User.findById(req.userId);
         user.photoCover = req.file.path;
         const result = await user.save();
-
+        if(!user.photoCover != "iamges/cp.png"){
+            deleteFile(user.photoCover.slice(7));
+        }
         res.status(200).json({
             message: "banner updated succesfully!"
         })
