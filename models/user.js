@@ -21,11 +21,11 @@ const userSchema = new Schema(
     },
     photoProf :{
         type:String,
-        default :"pp.png"
+        default :"images/pp.png"
     },
     photoCover :{
         type:String,
-        default :"cp.png"
+        default :"images/cp.png"
     },
     following : [{
         userId:{

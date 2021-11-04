@@ -4,19 +4,18 @@ const User = require("../models/user");
 const Tweret = require("../models/tweret");
 const bcrypt = require("bcryptjs");
 const {deleteFile} = require("../file");
+const path = require("path");
 exports.photoProfil = async(req,res,next)=>{
 
     try{
         const user = await User.findById(req.userId);
-        
-        user.photoProf = req.file.path;
-        imageUrl = user.photoProf.slice(7);
-        user.photoProf = imageUrl;
-        console.log(user.photoProf);
-        const result = await user.save();
-        if(user.photoProf != "pp.png"){
-            deleteFile(user.photoProf); 
+        if(user.photoProf != path.join("images","pp.png")){
+            deleteFile(user.photoProf.slice(7)); 
         }
+
+        user.photoProf = req.file.path;
+        const result = await user.save();
+    
         res.status(200).json({
             message: "profil picture updated succesfully!"
         })
@@ -36,11 +35,12 @@ exports.photoCoverture = async(req,res,next)=>{
     try{
 
         const user = await User.findById(req.userId);
-        user.photoCover = req.file.path.slice(7);
-        const result = await user.save();
-        if(!user.photoCover != "cp.png"){
-            deleteFile(user.photoCover);
+        if(user.photocover != path.join("images","pp.png")){
+            deleteFile(user.photoCover.slice(7)); 
         }
+        user.photoCover = req.file.path;
+        const result = await user.save();
+        
         res.status(200).json({
             message: "banner updated succesfully!"
         })
