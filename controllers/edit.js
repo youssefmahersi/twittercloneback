@@ -66,36 +66,14 @@ exports.editUser = async(req,res,next)=>{
     const password = req.body.password;
     const bio = req.body.bio;
     const user = await User.findById(req.userId);
-
-    if(username !=user.username){
-            user.username = username;
-            const result = await user.save();
-            res.status(200).json({
-                message : "username updated succesfully"
-            });
-    }
-    if(bio !=user.bio){
-            user.bio = bio;
-            const result = await user.save();
-            res.status(200).json({
-                message : "bio updated succesfully"
-            });
-
-        
-    }
-
-    const equalPassword = await bcrypt.compare(password, user.password); 
-    if(!equalPassword){
-        const newPassword = await bcrypt.hash(password, 12);
-        user.password = newPassword;
-        const result = await user.save();
-        res.status(200).json({
-            message : "password updated succesfully !"
-        });
-
-    }
+    user.username = username;
+    user.bio = bio;
+    const equalPassword = await bcrypt.compare(password, user.password);
+    const newPassword = await bcrypt.hash(password, 12);
+    user.password = newPassword;
+     const result = await user.save();
     res.status(200).json({
-        message : "Nothing to update!"
+        message : "Update done successfully!"
     });
 }catch(err){
     if (!err.statusCode) {

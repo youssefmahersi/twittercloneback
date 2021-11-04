@@ -3,7 +3,7 @@ const router = express.Router();
 const editController = require("../controllers/edit");
 const isAuth = require("../utils/is-auth");
 const { body } = require('express-validator');
-
+const User = require("../models/user");
 router.put("/pp",isAuth,editController.photoProfil);
 router.put("/cp",isAuth,editController.photoCoverture);
 router.put("/user-info",isAuth,[
@@ -16,7 +16,7 @@ router.put("/user-info",isAuth,[
     .withMessage("username must contain at least  4 characters ")
     .custom((value, { req }) => {
       return User.findOne({ username: value }).then(userDoc => {
-        if (userDoc) {
+        if (userDoc && (userDoc._id!= req.userId)) {
           return Promise.reject('Username already exists!');
         }
       });
