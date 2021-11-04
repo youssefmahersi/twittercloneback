@@ -2,7 +2,7 @@ const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-
+const path = require("path");
 
 exports.signup = (req, res, next) => {
     const errors = validationResult(req);
@@ -26,7 +26,9 @@ exports.signup = (req, res, next) => {
           following:[],
           followers:[],
           bookmarks:[],
-          retweet :[]
+          retweet :[],
+          photoCover : path.join("images","cp.png"),
+          photoProf: path.join("images","pp.png"),
         });
         return user.save();
       })
