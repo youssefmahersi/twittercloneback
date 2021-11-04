@@ -164,6 +164,9 @@ exports.getAll=async (req,res,next)=>{
           realPosts.push(a);
         }
       }
+      realPosts.sort(function(a, b) {
+        return b.rank - a.rank;
+      });
             
       res.status(200).json({posts : realPosts});
             

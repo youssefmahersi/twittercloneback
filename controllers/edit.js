@@ -7,12 +7,15 @@ const {deleteFile} = require("../file");
 exports.photoProfil = async(req,res,next)=>{
 
     try{
-
         const user = await User.findById(req.userId);
+        
         user.photoProf = req.file.path;
+        imageUrl = user.photoProf.slice(7);
+        user.photoProf = imageUrl;
+        console.log(user.photoProf);
         const result = await user.save();
-        if(user.photoProf != "iamges/pp.png"){
-            deleteFile(user.photoProf.slice(7));
+        if(user.photoProf != "pp.png"){
+            deleteFile(user.photoProf); 
         }
         res.status(200).json({
             message: "profil picture updated succesfully!"
@@ -33,10 +36,10 @@ exports.photoCoverture = async(req,res,next)=>{
     try{
 
         const user = await User.findById(req.userId);
-        user.photoCover = req.file.path;
+        user.photoCover = req.file.path.slice(7);
         const result = await user.save();
-        if(!user.photoCover != "iamges/cp.png"){
-            deleteFile(user.photoCover.slice(7));
+        if(!user.photoCover != "cp.png"){
+            deleteFile(user.photoCover);
         }
         res.status(200).json({
             message: "banner updated succesfully!"
