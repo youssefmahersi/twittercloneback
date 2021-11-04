@@ -624,7 +624,7 @@ exports.saveTweet = async(req,res,next)=>{
       throw error;
     }
     data = post;
-    const checkuser = post.saves.find(user => user.toStirng() ===postId.toString());
+    const checkuser = post.saves.find(user => user===postId);
     if(checkuser){
       const error = new Error('tweet saved before!');
       error.statusCode = 404;
