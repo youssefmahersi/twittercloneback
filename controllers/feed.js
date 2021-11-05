@@ -544,7 +544,8 @@ exports.commentPost = (req,res,next)=>{
       time :formatDate(),
       imageUrl : commentImage,
       userId : userId,
-      username : userInfo.username
+      username : userInfo.username,
+      pp:userInfo.photoProf
     });
     post.save();
   })
@@ -618,38 +619,39 @@ exports.saveTweet = async(req,res,next)=>{
 
   const userId = req.userId;
   const postId = req.body.postId;
-  var data;
   try{
     const post = await Post.findById(postId);
+    const user = await User.findById(userId);
     if(!post){
       const error = new Error('post not found!');
       error.statusCode = 404;
       throw error;
     }
-    data = post;
-    const checkuser = post.saves.find(user => user===postId);
+    const checkuser = post.saves.find(user => user===userId);
     if(checkuser){
-      const error = new Error('tweet saved before!');
-      error.statusCode = 404;
-      throw error;
+      var newSaves = post.saves.filter(userId => userId!= userId);
+      post.saves= newSaves;
+      const result = await post.save();
+      var  newBookmarks = user.bookmarks.filter(save => save._id.toString()!== postId.toString());
+      user.bookmarks = newBookmarks;
+      const result2 = await user.save();
+      res.status(200).json({message: "Tweet unsaved successfully !"});
+    }else{
+      post.saves.push(userId);
+      const result1 = await post.save();
+      
+      if(!user){
+        const error = new Error('user not found!');
+        error.statusCode = 404;
+        throw error;
+      }
+      const checkpostsaved = user.bookmarks.find(tweet => tweet._id=== postId);
+        user.bookmarks.push(post);
+        const result = await user.save();
+        res.status(200).json({message:"tweet saved successfuly!"});
+           
     }
-    post.saves.push(userId);
-    const result1 = await post.save();
-    const user = await User.findById(userId);
-    if(!user){
-      const error = new Error('user not found!');
-      error.statusCode = 404;
-      throw error;
-    }
-    const checkpostsaved = user.bookmarks.find(tweet => tweet._id.toString()=== postId);
-    if(checkpostsaved){
-      const error = new Error('tweet saved before!');
-      error.statusCode = 404;
-      throw error;
-    }
-    user.bookmarks.push(data);
-    const result = await user.save();
-    res.status(200).json({message:"tweet saved successfuly!"});
+    
   }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;

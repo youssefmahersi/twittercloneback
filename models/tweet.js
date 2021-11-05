@@ -32,6 +32,10 @@ const tweetSchema = new Schema({
             type:String,
             required :true
         },
+        pp:{
+            type:String,
+            required:true
+        },
         likes : [{
             userId :{
                 type : Schema.Types.ObjectId,

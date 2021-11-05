@@ -9,7 +9,7 @@ exports.photoProfil = async(req,res,next)=>{
 
     try{
         const user = await User.findById(req.userId);
-        if(user.photoProf != path.join("images","pp.png")){
+        if(user.photoProf){
             deleteFile(user.photoProf.slice(7)); 
         }
 
@@ -35,7 +35,7 @@ exports.photoCoverture = async(req,res,next)=>{
     try{
 
         const user = await User.findById(req.userId);
-        if(user.photocover != path.join("images","pp.png")){
+        if(user.photocover){
             deleteFile(user.photoCover.slice(7)); 
         }
         user.photoCover = req.file.path;

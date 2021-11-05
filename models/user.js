@@ -20,12 +20,10 @@ const userSchema = new Schema(
         required : true 
     },
     photoProf :{
-        type:String,
-        default :"pp.png"
+        type:String
     },
     photoCover :{
-        type:String,
-        default :"cp.png"
+        type:String
     },
     following : [{
         userId:{
