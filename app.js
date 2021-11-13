@@ -37,6 +37,7 @@ app.use(bodyParser.json()); // application/json
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 );
+
 //serve images statisticly
 app.use('/images', express.static(path.join(__dirname, 'images')));
 //cors

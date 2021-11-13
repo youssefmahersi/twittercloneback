@@ -83,10 +83,10 @@ const tweetSchema = new Schema({
         
     },
     total:{
-         type : mongoose.Decimal128,
+         type : Number,
     },
     rank : {
-         type: mongoose.Decimal128
+         type: Number
     }
  
     

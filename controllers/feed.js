@@ -3,6 +3,7 @@ const Post = require("../models/tweet");
 const User = require("../models/user");
 const Tweret = require("../models/tweret");
 const timeDif = require("../utils/timeDif");
+const Act = require("../models/act");
 
 function formatDate(){
   
@@ -15,48 +16,6 @@ function formatDate(){
   return `${year}/${month}/${date} ${hour}:${minutes}:${seconds}`;
 }
 
-// exports.followerspost = async(req,res,next)=>{
-//   const userId = req.userId;
-//   let posts =[];
-//   let followers = [];
-//   try{
-//       const user = await User.findById(userId);
-//       if(!user){
-//         const error = new Error('user not found!!');
-//         error.statusCode = 401;
-//         throw error;
-//       }
-//       followers = user.following;
-//       const tweets = await Post.find()
-//       if(!tweets){
-//         const error = new Error('posts not found!!');
-//         error.statusCode = 401;
-//         throw error;
-//       }
-//       for(let tweet of tweets){
-//         const postfollower = await followers.find(follower => follower.userId.toString() === tweet.userId.toString());
-//         if(postfollower){
-//         posts.push(tweet);
-//       }
-//     }
-    
-//     res.status(200).json({
-//       message: 'Fetched posts successfully.',
-//       posts: posts
-//     });
-
-//   }
-//   catch(err){
-//     if (!err.statusCode) {
-//       err.statusCode = 500;
-//     }
-//     next(err);
-//   }
-    
-// };
-
-
-
 exports.createTweet = async(req,res,next)=>{
   try{
   const errors = validationResult(req);  
@@ -66,7 +25,6 @@ exports.createTweet = async(req,res,next)=>{
     throw error;
   }
   var tweet;
-  var userInfo;
   let imageurl;
   if (!req.file) {
      imageurl = "";
@@ -76,10 +34,14 @@ exports.createTweet = async(req,res,next)=>{
   
 
   
-  const user = await User.findById(req.userId)
+  const user = await User.findById(req.userId);
   const users = await User.find();
-  userInfo=user;
-  const public = req.body.audience;
+  if(!user){
+    const error = new Error('User not found !');
+    error.statusCode = 422;
+    throw error;
+  }
+  const public = req.body.privacy;
   const comment = req.body.comment;
   const post = new Post({
     comment: comment,
@@ -95,20 +57,27 @@ exports.createTweet = async(req,res,next)=>{
     retweets : [],
     saves : []
   });
-  console.log(user.followers.length)
-  console.log((user.followers.length * 100)/users.length)
-  tweet = post
-  const result1 = await post.save()
+  const result1 = await post.save();
   const tweret = new Tweret({
     type : "tweet",
-    creatorId : userInfo._id.toString(),
-    creatorUsername: userInfo.username,
-    postId: tweet._id,
+    creatorId : user._id.toString(),
+    creatorUsername: user.username,
+    postId: post._id,
     time:formatDate(),
-    privacy: req.body.public
+    privacy: public
   })
   
   const result2 = await tweret.save();
+  const act = await Act.findOne({userId:req.userId});
+  var newLike = {
+    type :"tweet",
+    id:post._id
+  }
+  var newActivities = act.activities;
+  newActivities.push(newLike);
+  act.activities = newActivities;
+
+  const result3= await act.save();
   res.status(201).json({
     message: 'Post created successfully!'
   });
@@ -130,7 +99,7 @@ exports.getAll=async (req,res,next)=>{
     following = user.following;
     const tweets = await Tweret.find();
     if(!tweets){
-      const error = new Error('Post alerady exists');
+      const error = new Error('No posts');
       error.statusCode = 409;
       throw error;
     }else{
@@ -166,8 +135,8 @@ exports.getAll=async (req,res,next)=>{
       }
       realPosts.sort(function(a, b) {
         return b.rank - a.rank;
-      });
-            
+      }); 
+      console.log(realPosts)
       res.status(200).json({posts : realPosts});
             
     }
@@ -184,11 +153,28 @@ exports.getAll=async (req,res,next)=>{
 exports.getTweets = async(req,res,next)=>{
   const userId = req.params.userId;
   try{
-    const tweets = await Post.find({userId });
-    console.log(tweets);
-    res.status(200).json({
-      tweets
-    });
+    const user = await User.findById(req.userId);
+    const check = user.following.find(use =>use.userId.toString()=== userId.toString());
+    if(check){
+      const tweets = await Post.find({userId });
+
+      res.status(200).json({tweets
+      }); 
+    }else{
+      if(userId === req.userId){
+        const tweets = await Post.find({userId :req.userId });
+        
+        res.status(200).json({
+          tweets
+        });
+      }else{
+        const tweets = await Post.find({privacy:false,userId: userId});
+       
+        res.status(200).json({
+          tweets
+        }); 
+      }
+    }
   } 
   catch(err){
     if (!err.statusCode) {
@@ -202,18 +188,20 @@ exports.getTweets = async(req,res,next)=>{
 
 
 
-exports.searchUser = (req,res,next)=>{
+exports.searchUser = async(req,res,next)=>{
   const userId = req.params.userId;
   let utilisateur;
-  User.findById(userId)
-  .then(user =>{
+  try{
+  const user = await User.findById(userId);
     if(!user){
       const error = new Error('Could not find user.');
         error.statusCode = 404;
         throw error;
     }
-    if(req.userId == userId){
-      utilisateur = user;
+    if(req.userId.toString() == userId.tostring()){
+      const error = new Error('press profil button !');
+      error.statusCode = 422;
+       throw error;
 
     }else{
       utilisateur = {
@@ -229,123 +217,102 @@ exports.searchUser = (req,res,next)=>{
     
     const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
     if(checkFollowingUser){
-      return Post.find({userId : userId});
+      var posts = await  Post.find({userId : userId});
     }else{
-      return Post.find({userId : userId,public : true});
+      var posts = await  Post.find({userId : userId,public : true});
     }
-  })
-  .then(posts =>{
     if(!posts){
       const error = new Error('Could not find posts.');
         error.statusCode = 404;
         throw error;
     }
     utilisateur.userPosts = posts;
+    const act = await Act.findOne({userId:req.userId});
+    var newAct = {
+      type :"usersearch",
+      id:req.params.userId
+    }
+    var newActivities = act.activities;
+    newActivities.push(newAct);
+    act.activities = newActivities;
+  
+    const result3= await act.save();
     res.status(200).json({
-      message : "found what u are looking for",
+      message : "found what u are looking for !",
       user : utilisateur
     })
-  })
-  .catch(err =>{
+}
+    catch(err   ){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+  }
 }
 
+exports.searchUsername = async(req,res,next)=>{
+  const username = req.body.username;
+  let  utilisateur;
+  try{
+    const user = await User.findById(req.userId);
+    const lookingUser = await User.findOne({username});
+    if(!lookingUser){
+      const error = new Error('Could not find user.');
+        error.statusCode = 404;
+        throw error;
+    }
+    if(user.username == lookingUser.username){
+      const error = new Error('press profil button!');
+      error.statusCode = 422;
+      throw error;
 
-// exports.followUser = (req,res,next)=>{
-//   const userId = req.userId;
-//   const followingId = req.body.userId;
-//   let followerUser;
-//   let user2;
-//   var checkUserfollowed ;
-//   User.findById(userId)
-//   .then(user =>{
-//     if(!user){
-//       const error = new Error('Could not find user.');
-//         error.statusCode = 404;
-//         throw error;
-//     }
-//     followerUser=user;
-//     return User.findById(followingId)
-//   })
-//   .then(user =>{
-//     if(!user){
-//       const error = new Error('Could not find following user.');
-//         error.statusCode = 404;
-//         throw error;
-//     }
-//     checkUserfollowed = user.followers.find(follower => follower.userId.toString() === followerUser._id.toString());
-//     if(!checkUserfollowed ){
-//       user2= user;
-//       user.followers.push({
-//         userId : followerUser._id,
-//         username : followerUser.username
-//       })
-//       return user.save();
-//     }
-//     const error = new Error('alerady followed user.');
-//     error.statusCode = 404;
-//     throw error;
-//   })
-
-//   .then(result =>{
-//     User.findById(req.userId)
-//     .then(user =>{
-//       user.following.push({
-//         userId : user2._id,
-//         username : user2.username
-//       })
-//       return user.save();
-//     })  
-//     .then(result =>{
-//       res.status(200).json({message : "following added succesfully"});
-//         })  
+    }else{
+      utilisateur = {
+        username : lookingUser.username,
+        email : lookingUser.email,
+        following : lookingUser.following,
+        followers : lookingUser.followers,
+        bio: lookingUser.bio,
+        photoProf : lookingUser.photoProf ,
+        photoCover : lookingUser.photoCover
+      }
+    }
     
-//   })
-//   .catch(err =>{
-//     if (!err.statusCode) {
-//       err.statusCode = 500;
-//     }
-//     next(err);
-//   })
-// }
+    const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
+    if(checkFollowingUser){
+      var posts = await  Post.find({userId : lookingUser._id});
+    }else{
+      var posts = await  Post.find({userId : lookingUser._id,public : true});
+    }
+    if(!posts){
+      const error = new Error('Could not find posts.');
+        error.statusCode = 404;
+        throw error;
+    }
+    utilisateur.userPosts = posts;
+    const act = await Act.findOne({userId:req.userId});
+    var newAct = {
+      type :"usersearch",
+      id:req.params.userId
+    }
+    var newActivities = act.activities;
+    newActivities.push(newAct);
+    act.activities = newActivities;
+  
+    const result3= await act.save();
+    res.status(200).json({
+      message : "found what u are looking for !",
+      user : utilisateur
+    })
+}
+    catch(err   ){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+}
 
-// exports.unfollowUser = (req,res,next)=>{
-//   const followingId = req.body.followingId;
-//   User.findById(req.userId)
-//   .then(user =>{
-//     if(!user){
-//       const error = new Error('alerady followed user.');
-//       error.statusCode = 404;
-//       throw error;
-//     }
-//     const newFollowings = user.following.filter(follow => follow.userId.toString() !== followingId);
-//     user.following = newFollowings;
-//     return user.save();
-//   })
-//   .then(result =>{
-//     console.log(followingId);
-//     return User.findById(followingId)
-    
-//   })
-//   .then(user => {
-//     const newFollowers = user.followers.filter(follow => follow.userId.toString() !== req.userId.toString());
-//     user.followers = newFollowers;
-//     return user.save();
-//   })
-//   .then(result =>{
-//     res.status(200).json({message : "unfollowing user succesfully"});
-//   })
-//   .catch(err =>{
-//     if (!err.statusCode) {
-//       err.statusCode = 500;
-//     }
-//     next(err);
-//   })
-// }
 
 exports.followUser = (req,res,next)=>{
   const userId = req.userId;
@@ -441,7 +408,7 @@ exports.getbookmarks = (req,res,next)=>{
       throw error;
     }
     res.status(200).json({
-      message : "succesfull feth !",
+      message : "succesfull fetch !",
       bookmarks : user.bookmarks
     })
   })
@@ -454,22 +421,22 @@ exports.getbookmarks = (req,res,next)=>{
 }
 
 
-exports.likePost = (req,res,next)=>{
+exports.likePost = async(req,res,next)=>{
   const userId = req.userId;
   const postId = req.body.postId;
   var userinfo;
   var state;
-  User.findById(userId)
-  .then(user =>{
+  try{
+
+  
+  const user = await User.findById(userId);
     if(!user){
       const error = new Error('user not found!');
       error.statusCode = 404;
       throw error;
     }
     userinfo = user;
-    return Post.findById(postId)
-  })
-  .then(post =>{
+    const post = await Post.findById(postId);
     if(!post){
       const error = new Error('post not found!');
       error.statusCode = 404;
@@ -480,33 +447,49 @@ exports.likePost = (req,res,next)=>{
       const newlikes = post.likes.filter(user => user.userId.toString()!== userId.toString());
       state = false;
       post.likes = newlikes;
-      return post.save();
+      const result = await  post.save();
+      const act = await Act.findOne({userId:req.userId});
+      var newActs = act.activities.filter(acte => {
+        if(acte.id.toString()!=post._id.toString() && acte.type != "tweetLike"){
+          return acte
+        }});
+      act.activities= newActs;
+      const result3= await act.save();
     }else{
       post.likes.push({
         userId : userId,
         username : userinfo.username
       })
       state= true;
-      return post.save();
+      const result = await  post.save();
+      const act = await Act.findOne({userId:req.userId});
+      var newAct = {
+        type :"tweetLike",
+        id: post._id
+      }
+      var newActivities = act.activities;
+      newActivities.push(newAct);
+      act.activities = newActivities;
+  
+      const result3= await act.save();
     }
-  })
-  .then(result =>{
     if(state){
       res.status(200).json({message :"like added successfully"});
     }else{
       res.status(200).json({message :"like deleted successfully"});
     }
-  })
-  .catch(err =>{
+
+  }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+}
 }
 
 
-exports.commentPost = (req,res,next)=>{
+exports.commentPost = async (req,res,next)=>{
+  try{
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -523,61 +506,66 @@ exports.commentPost = (req,res,next)=>{
   }else{
     commentImage = req.file.path;
   }
-  User.findById(userId)
-  .then(user =>{
-    if(!user){
+  const user = await User.findById(userId);
+  if(!user){
       const error = new Error('user not found!');
       error.statusCode = 404;
       throw error;
-    }
+  }
     userInfo=user;
-    return Post.findById(postId);
-  })
-  .then(post =>{
+    const post = await Post.findById(postId);
     if(!post){
       const error = new Error('post not found!');
       error.statusCode = 404;
       throw error;
     }
-    post.comments.push({
+    const a ={
       content : content,
       time :formatDate(),
       imageUrl : commentImage,
       userId : userId,
       username : userInfo.username,
-      pp:userInfo.photoProf
-    });
-    post.save();
-  })
-  .then(result=>{
-    res.status(200).json({message : "comment added successfully!"});
-  })
-  .catch(err =>{
+      pp:userInfo.photoProf,
+      likes :[]
+    }
+    post.comments.push(a);
+    const result = await post.save();
+    const act = await Act.findOne({userId:req.userId});
+    var newAct = {
+      type :"tweetComment",
+      id: post._id
+    }
+    var newActivities = act.activities;
+    newActivities.push(newAct);
+    act.activities = newActivities;
+
+    const result3= await act.save();
+    res.status(200).json({message : "comment added successfully!",comment : a});
+
+  }catch(err ){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+  }
 
 }
 
 
-exports.likeComment = (req,res,next)=>{
-  const userId = req.userId;
-  const postId = req.body.postId;
-  const commentId = req.body.commentId;
-  var userInfo;
-  User.findById(userId)
-  .then(user=>{
+exports.likeComment = async(req,res,next)=>{
+  try{
+    const userId = req.userId;
+    const postId = req.body.postId;
+    const commentId = req.body.commentId;
+    var userInfo;
+    const user = await User.findById(userId);
     if(!user){
       const error = new Error('user not found!');
       error.statusCode = 404;
       throw error;
     }
     userInfo = user;
-    return Post.findById(postId);
-  })
-  .then(post =>{
+    const post = await  Post.findById(postId);
     if(!post){
       const error = new Error('post not found!');
       error.statusCode = 404;
@@ -594,24 +582,41 @@ exports.likeComment = (req,res,next)=>{
     if(like){
       var newlikes = post.comments[lookedcommentIndex].likes.filter(like => like.userId.toString() !== userId);
       post.comments[lookedcommentIndex].likes = newlikes;
-      return post.save();
+      var result =  post.save();
+      const act = await Act.findOne({userId:req.userId});
+      var newActs = act.activities.filter(acte => {
+        if(acte.id.toString()!=post._id.toString() && acte.type != "commentLike"){
+          return acte
+        }});
+      act.activities = newActs;
+      const result3= await act.save();
+      res.status(200).json({message : "like deleted successfully!"});
     }else{
-      post.comments[lookedcommentIndex].likes.push({
+      var a ={
         userId : userId,
-        username : userInfo.username
-      });
-      return post.save();
+        username : user.username
+      }
+      post.comments[lookedcommentIndex].likes.push(a);
+      var result =  post.save();
+      const act = await Act.findOne({userId:req.userId});
+      var newAct = {
+        type :"commentLike",
+        id: post._id
+      }
+      var newActivities = act.activities;
+      newActivities.push(newAct);
+      act.activities = newActivities;
+  
+      const result3= await act.save();
+      res.status(200).json({message : "like added successfully!",like:a});
     }
-  })
-  .then(result =>{
-    res.status(200).json({message : "operation added successfully!"});
-  })
-  .catch(err =>{
+    
+  }catch(err ){
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
-  })
+  }
 }
 
 
@@ -627,14 +632,21 @@ exports.saveTweet = async(req,res,next)=>{
       error.statusCode = 404;
       throw error;
     }
-    const checkuser = post.saves.find(user => user===userId);
+    const checkuser = post.saves.find(user => user.toString()===userId.toString());
     if(checkuser){
-      var newSaves = post.saves.filter(userId => userId!= userId);
+      var newSaves = post.saves.filter(user => user.toString()!== userId.toString());
       post.saves= newSaves;
       const result = await post.save();
       var  newBookmarks = user.bookmarks.filter(save => save._id.toString()!== postId.toString());
       user.bookmarks = newBookmarks;
       const result2 = await user.save();
+      const act = await Act.findOne({userId:req.userId});
+      var newActs = act.activities.filter(acte => {
+        if(acte.id.toString()!==post._id.toString() && acte.type != "tweetSave"){
+          return acte
+        }});
+      act.activities = newActs;
+      const result3= await act.save();
       res.status(200).json({message: "Tweet unsaved successfully !"});
     }else{
       post.saves.push(userId);
@@ -648,6 +660,15 @@ exports.saveTweet = async(req,res,next)=>{
       const checkpostsaved = user.bookmarks.find(tweet => tweet._id=== postId);
         user.bookmarks.push(post);
         const result = await user.save();
+        const act = await Act.findOne({userId:req.userId});
+        var newAct = {
+          type :"tweetSave",
+          id: post._id
+        }
+        var newActivities = act.activities;
+        newActivities.push(newAct);
+        act.activities = newActivities;
+        const result3= await act.save();
         res.status(200).json({message:"tweet saved successfuly!"});
            
     }
@@ -668,9 +689,13 @@ exports.retweetPost = async(req,res,next)=>{
   try{
     const post = await Post.findById(postId);
     tweet = post;
-    post.retweets.push(req.userId);
-    const res1 =await post.save();
     const user = await User.findById(req.userId);
+    post.retweets.push({
+      userId : req.userId,
+      username : user.username
+    });
+    const res1 =await post.save();
+    
     if(!user){
       const error = new Error('user not found');
       error.statusCode = 404;
@@ -700,6 +725,15 @@ exports.retweetPost = async(req,res,next)=>{
       retweeterUsername: userInfo.username
     })
     const result = await  tweret.save();
+    const act = await Act.findOne({userId:req.userId});
+        var newAct = {
+          type :"tweetRetweet",
+          id: post._id
+        }
+        var newActivities = act.activities;
+        newActivities.push(newAct);
+        act.activities = newActivities;
+        const result3= await act.save();
     res.status(200).json({message : "retweet added successfully!"});
   }catch(err){
     if (!err.statusCode) {
@@ -716,11 +750,10 @@ exports.topTweets = async(req,res,next)=>{
   try{
     const tweets = await Post.find();
     const user = await User.findById(userId);
-    ///overhere
     for(let tweet of tweets){
-      if(tweet.privacy === true){
-      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
-      if(postfollower){
+      if((tweet.privacy === false) && (tweet.userId.toString() !== userId.toString())){
+      const postfollower = user.following.find(follower => follower.userId.toString() === tweet.userId.toString());
+      if(!postfollower){
         posts.push(tweet);
       }
       posts.sort(function(a, b) {
@@ -745,7 +778,6 @@ exports.topTweets = async(req,res,next)=>{
 
 
 exports.latestTweets = async (req,res,next)=>{
-  console.log("kjjs")
   const timeNow = new Date();
   const userId = req.userId;
   var posts = [];
@@ -754,10 +786,9 @@ exports.latestTweets = async (req,res,next)=>{
     const user = await User.findById(userId);
     ///overhere
     for(let tweet of tweets){
-      console.log(timeDif(new Date(tweet.timeCreated),timeNow))
-      if((tweet.privacy === true) && (timeDif(new Date(tweet.timeCreated),timeNow)<1)){
-      const postfollower = user.following.find(follower => follower.userId.toString() !== tweet.userId.toString());
-      if(postfollower){
+      if((tweet.privacy === false) && (timeDif(new Date(tweet.timeCreated),timeNow)<1) && (tweet.userId.toString() != userId.toString())){
+      const postfollower = user.following.find(follower => follower.userId.toString() === tweet.userId.toString());
+      if(!postfollower){
         posts.push(tweet);
       }
       posts.sort(function(a, b) {
@@ -782,13 +813,22 @@ exports.latestTweets = async (req,res,next)=>{
 
 exports.popularPeople = async(req,res,next)=>{
   const userId = req.userId;
-
-  var users = await User.find();
-  users.sort(function(a, b) {
+  var popularUsers=[];
+  const users = await User.find();
+  const user = await User.findById(userId); 
+  for(let use of users){
+    if(use._id.toString()!== userId.toString()){
+      const check = user.following.find(use => use.userId.toString()=== use._id.toString());
+      if(!check){
+        popularUsers.push(use);
+      }
+    }
+  }
+  popularUsers.sort(function(a, b) {
     return b.followers.length - a.followers.length;
   });
   
-  res.status(200).json({users:users});
+  res.status(200).json({users:popularUsers});
 
 };
 

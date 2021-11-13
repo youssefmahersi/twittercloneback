@@ -72,8 +72,11 @@ exports.editUser = async(req,res,next)=>{
     user.username = username;
     user.bio = bio;
     const equalPassword = await bcrypt.compare(password, user.password);
-    const newPassword = await bcrypt.hash(password, 12);
-    user.password = newPassword;
+    if(password!= ""&& password.length >=5 && equalPassword==false){
+        
+        const newPassword = await bcrypt.hash(password, 12);
+        user.password = newPassword;
+    }
      const result = await user.save();
     res.status(200).json({
         message : "Update done successfully!"

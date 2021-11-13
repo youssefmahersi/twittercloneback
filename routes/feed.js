@@ -16,6 +16,7 @@ router.get("/popular-people",isAuth,feedController.popularPeople);
 router.get("/tweet-media",isAuth,feedController.tweetMedia);
 router.post("/follow-user",isAuth,feedController.followUser);
 // router.post("/unfollow-user",isAuth,feedController.unfollowUser);
+router.post("/user/",isAuth,feedController.searchUsername);
 router.post("/like-post",isAuth,feedController.likePost);
 router.post("/save-tweet",isAuth,feedController.saveTweet);
 router.post("/comment-post",isAuth,[

@@ -3,8 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const path = require("path");
-
-exports.signup = (req, res, next) => {
+const Act = require("../models/act");
+exports.signup = async (req, res, next) => {
+  try{
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const error = new Error('Validation failed.');
@@ -15,32 +16,36 @@ exports.signup = (req, res, next) => {
     const email = req.body.email;
     const username = req.body.username;
     const password = req.body.password;
-    bcrypt
-      .hash(password, 12)
-      .then(hashedPw => {
-        const user = new User({
-          username :username,
-          email: email,
-          password: hashedPw,
-          tweets :[],
-          following:[],
-          followers:[],
-          bookmarks:[],
-          retweet :[],
-          photoCover : path.join("images","cp.png"),
-          photoProf: path.join("images","pp.png"),
-        });
-        return user.save();
-      })
-      .then(result => {
-        res.status(201).json({ message: 'User created!', userId: result._id });
-      })
-      .catch(err => {
-        if (!err.statusCode) {
-          err.statusCode = 500;
-        }
-        next(err);
-      });
+    const hashedPw = await bcrypt.hash(password, 12);
+    const user = new User({
+        username :username,
+        email: email,
+        password: hashedPw,
+        tweets :[],
+        following:[],
+        followers:[],
+        bookmarks:[],
+        retweet :[],
+        photoCover :null,
+        photoProf: null,
+    });
+    const result = await  user.save();
+    const act = new Act({
+      userId : user._id,
+      activities:[]
+    })
+
+    const result2 = await act.save();
+
+    res.status(201).json({ message: 'User created!', userId: result._id });
+
+  }
+  catch(err){
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+}
   };
 
   exports.login = (req, res, next) => {

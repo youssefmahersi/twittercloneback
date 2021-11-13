@@ -7,6 +7,8 @@ const User = require("../models/user");
 router.put("/pp",isAuth,editController.photoProfil);
 router.put("/cp",isAuth,editController.photoCoverture);
 router.put("/user-info",isAuth,[
+  body("bio").trim().isLength({min:10})
+  .withMessage("bio must contain at least  10 characters "),
     body("username").trim().notEmpty()
     .withMessage('username is required')
     .not()
@@ -23,8 +25,6 @@ router.put("/user-info",isAuth,[
     }),
     body('password')
       .trim()
-      .isLength({ min: 5 })
-      .withMessage("password must contain at least 5 characters"),
 ],editController.editUser);
 
 
