@@ -5,6 +5,7 @@ const Tweret = require("../models/tweret");
 const timeDif = require("../utils/timeDif");
 const Act = require("../models/act");
 var tweetUpdate = require("../utils/tweetUpdate");
+var arrayUpdate = require("../utils/arrayUpdate");
 function formatDate(){
   
   const year = new Date().getFullYear();
@@ -197,34 +198,28 @@ exports.searchUser = async(req,res,next)=>{
         error.statusCode = 404;
         throw error;
     }
-    if(req.userId.toString() === userId.toString()){
-      const error = new Error('press profil button !');
-      error.statusCode = 422;
-       throw error;
-
-    }else{
-      utilisateur = {
+    var newFollowers = await arrayUpdate(user.followers);
+    var newFollowing = await arrayUpdate(user.following);
+    utilisateur = {
         username : user.username,
         email : user.email,
-        following : user.following,
-        followers : user.followers,
+        following : newFollowing ,
+        followers : newFollowers ,
         bio: user.bio,
         photoProf : user.photoProf ,
         photoCover : user.photoCover
+      } 
+    if(req.userId.toString() === userId.toString()){
+      var posts = await Post.find({userId})
+    } else{
+      const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
+      if(checkFollowingUser){
+        var posts = await  Post.find({userId : userId});
       }
-    }
-    
-    const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
-    if(checkFollowingUser){
-      var posts = await  Post.find({userId : userId});
-    }else{
-      var posts = await  Post.find({userId : userId,public : true});
-    }
-    if(!posts){
-      const error = new Error('Could not find posts.');
-        error.statusCode = 404;
-        throw error;
-    }
+      else{
+        var posts = await  Post.find({userId : userId,public : true});
+      }
+    } 
     var xx = await tweetUpdate(posts);
     utilisateur.userPosts = xx;
     const act = await Act.findOne({userId:req.userId});
@@ -261,34 +256,28 @@ exports.searchUsername = async(req,res,next)=>{
         error.statusCode = 404;
         throw error;
     }
-    if(user.username === lookingUser.username){
-      const error = new Error('press profil button!');
-      error.statusCode = 422;
-      throw error;
-
-    }else{
+    var newFollowers = await arrayUpdate(lookingUser.followers);
+    var newFollowing = await arrayUpdate(lookingUser.following);
       utilisateur = {
         username : lookingUser.username,
         email : lookingUser.email,
-        following : lookingUser.following,
-        followers : lookingUser.followers,
+        following : newFollowing ,
+        followers : newFollowers,
         bio: lookingUser.bio,
         photoProf : lookingUser.photoProf ,
         photoCover : lookingUser.photoCover
       }
-    }
-    
-    const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
+    if(user.username === lookingUser.username){
+      var posts = await  Post.find({userId : lookingUser._id});
+    }else{
+      const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
     if(checkFollowingUser){
       var posts = await  Post.find({userId : lookingUser._id});
     }else{
       var posts = await  Post.find({userId : lookingUser._id,public : true});
     }
-    if(!posts){
-      const error = new Error('Could not find posts.');
-        error.statusCode = 404;
-        throw error;
     }
+    
     var xx = await tweetUpdate(posts);
     utilisateur.userPosts = xx;
     const act = await Act.findOne({userId:req.userId});
@@ -835,6 +824,10 @@ exports.popularPeople = async(req,res,next)=>{
     if(use._id.toString()!== userId.toString()){
       const check = user.following.find(us => us.userId.toString() == use._id.toString());
       if(!check){
+        var followers = await arrayUpdate(use.followers);
+        var following = await arrayUpdate(use.following);
+        use.followers= followers;
+        use.following = following
         popularUsers.push(use);
       }
     }

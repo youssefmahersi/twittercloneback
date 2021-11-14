@@ -33,7 +33,13 @@ const userSchema = new Schema(
           timeFollowed : {
               type:String,
               required:true
-          }
+          },
+          username:{
+            type : String
+        },
+        pp:{
+            type:String
+        }
     }],
     followers : [
         {
