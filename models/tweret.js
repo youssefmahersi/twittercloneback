@@ -12,8 +12,7 @@ const tweretSchema = new Schema({
         ref :"User"
    },
    creatorUsername : {
-        type : String,
-        required : true
+        type : String
    },
    postId :{
         type: Schema.Types.ObjectId,

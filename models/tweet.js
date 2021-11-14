@@ -29,12 +29,10 @@ const tweetSchema = new Schema({
             ref : "User"
         },
         username:{
-            type:String,
-            required :true
+            type:String
         },
         pp:{
-            type:String,
-            required:true
+            type:String
         },
         likes : [{
             userId :{
@@ -43,9 +41,12 @@ const tweetSchema = new Schema({
                 ref : "User"
             },
             username :{
-                type:String,
-                required:true
+                type:String
+            },
+            pp:{
+                type:String
             }
+
         }]
     }
     ],
@@ -57,8 +58,10 @@ const tweetSchema = new Schema({
                 ref : "User"
             },
             username :{
-                type:String,
-                required:true
+                type:String
+            },
+            pp:{
+                type:String
             }
         }
     ],
@@ -74,8 +77,10 @@ const tweetSchema = new Schema({
         ref : "User"
     },
     username :{
-        type:String,
-        required:true
+        type:String
+    },
+    pp :{
+        type:String
     },
     privacy : {
         type : Boolean,

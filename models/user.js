@@ -30,10 +30,6 @@ const userSchema = new Schema(
             type: Schema.Types.ObjectId,
             required:true
           },
-          username:{
-              type : String,
-              required :true
-          },
           timeFollowed : {
               type:String,
               required:true
@@ -49,8 +45,10 @@ const userSchema = new Schema(
             
           },
           username:{
-              type : String,
-              required :true
+              type : String
+          },
+          pp:{
+              type:String
           },
           timeFollowed : {
               type:String,
