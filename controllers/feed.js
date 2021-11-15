@@ -55,12 +55,15 @@ exports.createTweet = async(req,res,next)=>{
     total : (user.followers.length * 100)/users.length,
     rank : ((user.followers.length * 100)/users.length)/Math.log(1.02),
     retweets : [],
-    saves : []
+    saves : [],
+    username:user.username,
+    pp: user.photoProf
   });
   const result1 = await post.save();
   const tweret = new Tweret({
     type : "tweet",
     creatorId : user._id.toString(),
+    retweeterUsername:user.username,
     postId: post._id,
     time:formatDate(),
     privacy: public
@@ -117,7 +120,7 @@ exports.getAll=async (req,res,next)=>{
         }
       }
       for(let post of posts){
-        const tweet = await Post.findById(post.postId)
+        var tweet = await Post.findById(post.postId);
         if(post.type == "tweet"){
           const b = {
             type: "tweet",
@@ -125,11 +128,10 @@ exports.getAll=async (req,res,next)=>{
           }
           realPosts.push(b);  
         }else{
-          var s = await User.findById(post.creatorId);
           const a = {
             type: "retweet",
             tweet: tweet,
-            status:s.username+" retweeted"
+            status:tweet.username+" retweeted"
           }
           realPosts.push(a);
         }
@@ -137,8 +139,7 @@ exports.getAll=async (req,res,next)=>{
       realPosts.sort(function(a, b) {
         return b.rank - a.rank;
       }); 
-      var xx = await tweetUpdate(realPosts);
-      res.status(200).json({posts : xx});
+      res.status(200).json({posts : realPosts});
             
     }
     }
@@ -158,20 +159,18 @@ exports.getTweets = async(req,res,next)=>{
     const check = user.following.find(use =>use.userId.toString()=== userId.toString());
     if(check){
       const tweets = await Post.find({userId });
-      var xx = await tweetUpdate(tweets);
-      res.status(200).json({tweets:xx}); 
+      
+      res.status(200).json({tweets}); 
     }else{
       if(userId === req.userId){
         const tweets = await Post.find({userId :req.userId });
-        var xx = await tweetUpdate(tweets);
         res.status(200).json({
-          tweets:xx
+          tweets
         });
       }else{
         const tweets = await Post.find({privacy:false,userId: userId});
-        var xx = await tweetUpdate(tweets);
         res.status(200).json({
-          tweets:xx
+          tweets
         }); 
       }
     }
@@ -198,14 +197,12 @@ exports.searchUser = async(req,res,next)=>{
         error.statusCode = 404;
         throw error;
     }
-    var newFollowers = await arrayUpdate(user.followers);
-    var newFollowing = await arrayUpdate(user.following);
     utilisateur = {
         _id : user._id,
         username : user.username,
         email : user.email,
-        following : newFollowing ,
-        followers : newFollowers ,
+        following : user.following ,
+        followers : user.followers ,
         bio: user.bio,
         photoProf : user.photoProf ,
         photoCover : user.photoCover
@@ -221,8 +218,7 @@ exports.searchUser = async(req,res,next)=>{
         var posts = await  Post.find({userId : userId,public : true});
       }
     } 
-    var xx = await tweetUpdate(posts);
-    utilisateur.userPosts = xx;
+    utilisateur.userPosts = posts;
     const act = await Act.findOne({userId:req.userId});
     var newAct = {
       type :"usersearch",
@@ -257,31 +253,6 @@ exports.searchUsername = async(req,res,next)=>{
         error.statusCode = 404;
         throw error;
     }
-    var newFollowers = await arrayUpdate(lookingUser.followers);
-    var newFollowing = await arrayUpdate(lookingUser.following);
-      utilisateur = {
-        _id : user._id,
-        username : lookingUser.username,
-        email : lookingUser.email,
-        following : newFollowing ,
-        followers : newFollowers,
-        bio: lookingUser.bio,
-        photoProf : lookingUser.photoProf ,
-        photoCover : lookingUser.photoCover
-      }
-    if(user.username === lookingUser.username){
-      var posts = await  Post.find({userId : lookingUser._id});
-    }else{
-      const checkFollowingUser = utilisateur.followers.find(follower => follower.userId.toString()=== req.userId.toString());
-    if(checkFollowingUser){
-      var posts = await  Post.find({userId : lookingUser._id});
-    }else{
-      var posts = await  Post.find({userId : lookingUser._id,public : true});
-    }
-    }
-    
-    var xx = await tweetUpdate(posts);
-    utilisateur.userPosts = xx;
     const act = await Act.findOne({userId:req.userId});
     var newAct = {
       type :"usersearch",
@@ -294,7 +265,7 @@ exports.searchUsername = async(req,res,next)=>{
     const result3= await act.save();
     res.status(200).json({
       message : "found what u are looking for !",
-      user : utilisateur
+      id : lookingUser._id
     })
 }
     catch(err   ){
@@ -346,7 +317,9 @@ exports.followUser = (req,res,next)=>{
       state = true;
       following.followers.push({
         userId : userId,
-        timeFollowed :formatDate()
+        timeFollowed :formatDate(),
+        username :userInfo.username,
+        pp:userinfo.photoProf
       });
       return following.save();
     }
@@ -363,6 +336,8 @@ exports.followUser = (req,res,next)=>{
     if(state){
       user.following.push({
         userId : followingInfo._id.toString(),
+        username : followingInfo.username,
+        pp:followingInfo.photoProf,
         timeFollowed : formatDate()
       })
       return user.save();
@@ -397,10 +372,9 @@ exports.getbookmarks = async(req,res,next)=>{
       error.statusCode = 404;
       throw error;
     }
-    var xx = await tweetUpdate(user.bookmarks);
     res.status(200).json({
       message : "succesfull fetch !",
-      bookmarks : xx
+      bookmarks : user.bookmarks
     })
   }catch(err ){
     if (!err.statusCode) {
@@ -446,14 +420,12 @@ exports.likePost = async(req,res,next)=>{
       act.activities= newActs;
       const result3= await act.save();
     }else{
-      var c = {
+      var c ={
         userId : userId,
         username: user.username,
         pp : user.photoProf
       }
-      post.likes.push({
-        userId : userId
-      })
+      post.likes.push(c)
       state= true;
       const result = await  post.save();
       const act = await Act.findOne({userId:req.userId});
@@ -522,13 +494,7 @@ exports.commentPost = async (req,res,next)=>{
       pp:user.photoProf,
       likes :[]
     }
-    post.comments.push({
-      content : content,
-      time :formatDate(),
-      imageUrl : commentImage,
-      userId : userId,
-      likes :[]
-    });
+    post.comments.push(a);
     const result = await post.save();
     const act = await Act.findOne({userId:req.userId});
     var newAct = {
@@ -597,9 +563,7 @@ exports.likeComment = async(req,res,next)=>{
         username : user.username,
         pp: user.photoProf
       }
-      post.comments[lookedcommentIndex].likes.push({
-        userId : userId
-      });
+      post.comments[lookedcommentIndex].likes.push(a);
       var result =  post.save();
       const act = await Act.findOne({userId:req.userId});
       var newAct = {
@@ -701,20 +665,10 @@ exports.retweetPost = async(req,res,next)=>{
     }
    
     userInfo = user;
-    const checkPost = await user.retweet.find(post => post.postId === postId);
-    if(checkPost){
-      const error = new Error('Post alerady exists');
-      error.statusCode = 409;
-      throw error;
-    }
+   
     post.retweets.push( req.userId);
     const res1 =await post.save();
-    
-    var newRetweet = {
-      postId : postId,
-      timeRetweeted : new Date()
-    }
-    user.retweet.push(newRetweet);
+    user.retweet.push(postId);
     const result1 = await user.save();
     const tweret = new Tweret({
       type : "retweet",
@@ -765,10 +719,9 @@ exports.topTweets = async(req,res,next)=>{
     
 
     }
-    var xx = await tweetUpdate(posts);
 
   }
-  res.status(200).json({posts:xx});
+  res.status(200).json({posts:posts});
   }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -801,10 +754,9 @@ exports.latestTweets = async (req,res,next)=>{
     
 
     }
-    var xx = await tweetUpdate(posts);
 
   }
-  res.status(200).json({posts:xx});
+  res.status(200).json({posts:posts});
   }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -824,10 +776,6 @@ exports.popularPeople = async(req,res,next)=>{
     if(use._id.toString()!== userId.toString()){
       const check = user.following.find(us => us.userId.toString() == use._id.toString());
       if(!check){
-        var followers = await arrayUpdate(use.followers);
-        var following = await arrayUpdate(use.following);
-        use.followers= followers;
-        use.following = following
         popularUsers.push(use);
       }
     }
@@ -859,10 +807,9 @@ exports.tweetMedia = async(req,res,next)=>{
     
 
     }
-    var xx = await tweetUpdate(posts);
 
   }
-  res.status(200).json({posts:xx});
+  res.status(200).json({posts:posts});
   }catch(err){
     if (!err.statusCode) {
       err.statusCode = 500;

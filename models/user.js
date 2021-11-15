@@ -35,10 +35,12 @@ const userSchema = new Schema(
               required:true
           },
           username:{
-            type : String
+            type : String,
+            required:true
         },
         pp:{
-            type:String
+            type:String,
+            required:true
         }
     }],
     followers : [
@@ -51,10 +53,12 @@ const userSchema = new Schema(
             
           },
           username:{
-              type : String
+              type : String,
+              required:true
           },
           pp:{
-              type:String
+              type:String,
+              required:true
           },
           timeFollowed : {
               type:String,

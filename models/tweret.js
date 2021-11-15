@@ -31,7 +31,8 @@ const tweretSchema = new Schema({
         ref :"User"
    },
    retweeterUsername:{
-        type : String
+        type : String,
+        required:true
    }
 });
 
