@@ -201,6 +201,7 @@ exports.searchUser = async(req,res,next)=>{
     var newFollowers = await arrayUpdate(user.followers);
     var newFollowing = await arrayUpdate(user.following);
     utilisateur = {
+        _id : user._id,
         username : user.username,
         email : user.email,
         following : newFollowing ,
@@ -259,6 +260,7 @@ exports.searchUsername = async(req,res,next)=>{
     var newFollowers = await arrayUpdate(lookingUser.followers);
     var newFollowing = await arrayUpdate(lookingUser.following);
       utilisateur = {
+        _id : user._id,
         username : lookingUser.username,
         email : lookingUser.email,
         following : newFollowing ,
