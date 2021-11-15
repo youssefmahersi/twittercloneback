@@ -694,17 +694,12 @@ exports.retweetPost = async(req,res,next)=>{
     const post = await Post.findById(postId);
     tweet = post;
     const user = await User.findById(req.userId);
-    post.retweets.push({
-      userId : req.userId,
-      username : user.username
-    });
-    const res1 =await post.save();
-    
     if(!user){
       const error = new Error('user not found');
       error.statusCode = 404;
       throw error;
     }
+   
     userInfo = user;
     const checkPost = await user.retweet.find(post => post.postId === postId);
     if(checkPost){
@@ -712,6 +707,9 @@ exports.retweetPost = async(req,res,next)=>{
       error.statusCode = 409;
       throw error;
     }
+    post.retweets.push( req.userId);
+    const res1 =await post.save();
+    
     var newRetweet = {
       postId : postId,
       timeRetweeted : new Date()
