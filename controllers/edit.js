@@ -12,7 +12,7 @@ exports.photoProfil = async(req,res,next)=>{
         if(user.photoProf){
             deleteFile(user.photoProf.slice(7)); 
         }
-
+        console.log(req.file)
         user.photoProf = req.file.path;
         const result = await user.save();
     
@@ -38,6 +38,9 @@ exports.photoCoverture = async(req,res,next)=>{
         if(user.photocover){
             deleteFile(user.photoCover.slice(7)); 
         }
+        console.log("ddd")
+        console.log(req.file)
+
         user.photoCover = req.file.path;
         const result = await user.save();
         

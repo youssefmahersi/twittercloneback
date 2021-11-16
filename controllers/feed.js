@@ -4,6 +4,7 @@ const User = require("../models/user");
 const Tweret = require("../models/tweret");
 const timeDif = require("../utils/timeDif");
 const Act = require("../models/act");
+const user = require('../models/user');
 function formatDate(){
   
   const year = new Date().getFullYear();
@@ -313,11 +314,16 @@ exports.followUser = (req,res,next)=>{
     }else{
       //add follower
       state = true;
+      console.log("//",userInfo)
       following.followers.push({
         userId : userId,
         timeFollowed :formatDate(),
         username :userInfo.username,
-        pp:userInfo.photoProf
+        pp:userInfo.photoProf,
+        pc :userInfo.photoCover,
+        userFollowers : userInfo.followers,
+        userBio : userInfo.bio,
+        userFollowing : userInfo.following
       });
       return following.save();
     }
@@ -332,11 +338,17 @@ exports.followUser = (req,res,next)=>{
       throw error;
     }
     if(state){
+      console.log("//",followingInfo)
       user.following.push({
         userId : followingInfo._id.toString(),
         username : followingInfo.username,
         pp:followingInfo.photoProf,
-        timeFollowed : formatDate()
+        timeFollowed : formatDate(),
+        pc :followingInfo.photoCover,
+        userFollowers : followingInfo.followers,
+        userBio : followingInfo.bio,
+        userFollowing : followingInfo.following
+
       })
       return user.save();
     }else{

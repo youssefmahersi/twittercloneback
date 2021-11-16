@@ -40,6 +40,18 @@ const userSchema = new Schema(
         },
         pp:{
             type:String
+        },
+        pc:{
+            type :String
+        },
+        userBio :{
+            type :String
+        },
+        userFolllowers : {
+            type:Array
+        },
+        userFolllowing : {
+            type:Array
         }
     }],
     followers : [
@@ -61,6 +73,18 @@ const userSchema = new Schema(
           timeFollowed : {
               type:String,
               required:true
+          },
+          pc:{
+              type :String
+          },
+          userBio :{
+              type :String
+          },
+          userFolllowers : {
+              type:Array
+          },
+          userFolllowing : {
+              type:Array
           }
         }
     ],
