@@ -39,8 +39,7 @@ const userSchema = new Schema(
             required:true
         },
         pp:{
-            type:String,
-            required:true
+            type:String
         }
     }],
     followers : [
@@ -57,8 +56,7 @@ const userSchema = new Schema(
               required:true
           },
           pp:{
-              type:String,
-              required:true
+              type:String
           },
           timeFollowed : {
               type:String,

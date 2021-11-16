@@ -4,8 +4,6 @@ const User = require("../models/user");
 const Tweret = require("../models/tweret");
 const timeDif = require("../utils/timeDif");
 const Act = require("../models/act");
-var tweetUpdate = require("../utils/tweetUpdate");
-var arrayUpdate = require("../utils/arrayUpdate");
 function formatDate(){
   
   const year = new Date().getFullYear();
@@ -57,7 +55,7 @@ exports.createTweet = async(req,res,next)=>{
     retweets : [],
     saves : [],
     username:user.username,
-    pp: user.photoProf
+    pp: user.imageUrl?user.imageUrl:""
   });
   const result1 = await post.save();
   const tweret = new Tweret({
@@ -131,7 +129,7 @@ exports.getAll=async (req,res,next)=>{
           const a = {
             type: "retweet",
             tweet: tweet,
-            status:tweet.username+" retweeted"
+            status:post.retweeterUsername+" retweeted"
           }
           realPosts.push(a);
         }
@@ -215,7 +213,7 @@ exports.searchUser = async(req,res,next)=>{
         var posts = await  Post.find({userId : userId});
       }
       else{
-        var posts = await  Post.find({userId : userId,public : true});
+        var posts = await  Post.find({userId : userId,privacy : false});
       }
     } 
     utilisateur.userPosts = posts;
@@ -319,7 +317,7 @@ exports.followUser = (req,res,next)=>{
         userId : userId,
         timeFollowed :formatDate(),
         username :userInfo.username,
-        pp:userinfo.photoProf
+        pp:userInfo.photoProf
       });
       return following.save();
     }
