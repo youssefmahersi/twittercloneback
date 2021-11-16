@@ -56,7 +56,7 @@ exports.createTweet = async(req,res,next)=>{
     retweets : [],
     saves : [],
     username:user.username,
-    pp: user.imageUrl?user.imageUrl:""
+    pp: user.photoProf?user.photoProf:""
   });
   const result1 = await post.save();
   const tweret = new Tweret({
@@ -314,7 +314,6 @@ exports.followUser = (req,res,next)=>{
     }else{
       //add follower
       state = true;
-      console.log("//",userInfo)
       following.followers.push({
         userId : userId,
         timeFollowed :formatDate(),
@@ -338,7 +337,6 @@ exports.followUser = (req,res,next)=>{
       throw error;
     }
     if(state){
-      console.log("//",followingInfo)
       user.following.push({
         userId : followingInfo._id.toString(),
         username : followingInfo.username,
