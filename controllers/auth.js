@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const path = require("path");
 const Act = require("../models/act");
+
+require('dotenv').config()
+
 exports.signup = async (req, res, next) => {
   try{
     const errors = validationResult(req);
@@ -73,7 +76,7 @@ exports.signup = async (req, res, next) => {
             email: loadedUser.email,
             userId: loadedUser._id.toString()
           },
-          'somesupersecretsecret',
+          process.env.SECRET_HASHING_KEY,
           { expiresIn: '24h' }
         );
         res.status(200).json({ token: token, userId: loadedUser._id.toString(),username:loadedUser.username,auth:true,pp:loadedUser.photoProf });
