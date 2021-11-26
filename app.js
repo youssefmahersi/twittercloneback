@@ -10,6 +10,8 @@ const editRoutes = require("./routes/edit");
 const dbupdate = require("./routes/dbChange");
 const app = express();
 
+require('dotenv').config()
+
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'images');
@@ -65,8 +67,7 @@ app.use((error, req, res, next) => {
 //database connection
 mongoose
   .connect(
-    // 'mongodb+srv://maximilian:9u4biljMQc4jjqbe@cluster0-ntrwp.mongodb.net/messages?retryWrites=true'
-    "mongodb+srv://youssef23:youssef23@return.ek7z3.mongodb.net/twitterClone?retryWrites=true&w=majority",
+    process.env.MONGO_URL,
     {useNewUrlParser: true, useUnifiedTopology: true}
   )
   .then(result => {
